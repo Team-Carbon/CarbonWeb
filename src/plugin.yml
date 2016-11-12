@@ -1,0 +1,23 @@
+name: CarbonWeb
+author: OffLuffy
+description: Web utilties for Team-Carbon
+version: 0.0.1
+main: net.teamcarbon.carbonweb.CarbonWeb
+depends: [Votifier]
+commands:
+  carbonwebreload:
+    description: Reloads config values
+    usage: /cwreload
+    aliases: [cwreload, webreload, cwr]
+  carbonwebnotice:
+    description: Set or toggle the JSON notice
+    usage: /cwnotice [on|off|set <msg>|test <on|off>]
+    aliases: [cwnotice, webnotice, notice]
+  carbonwebvote:
+    description: Vote command
+    usage: /vote
+    aliases: [cwvote, webvote, cwv, votes]
+permission:
+  carbonweb.notice:
+    description: Allows setting and toggling the JSON notice
+    default: op
