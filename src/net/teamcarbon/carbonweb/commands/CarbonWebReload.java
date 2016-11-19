@@ -16,7 +16,7 @@ public class CarbonWebReload implements CommandExecutor {
 			return true;
 		}
 
-		CarbonWeb.reloadConf();
+		CarbonWeb.inst.reloadConf();
 		sender.sendMessage("Reloaded " + CarbonWeb.inst.getDescription().getName());
 
 		return true;

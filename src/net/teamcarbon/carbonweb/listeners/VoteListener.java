@@ -22,20 +22,20 @@ import java.util.*;
 public class VoteListener implements Listener {
 
 	// Votes that need to have UUIDs resolved
-	private static HashMap<String, VoteInfo> uuidVotes = new HashMap<String, VoteInfo>();
+	private static HashMap<String, VoteInfo> uuidVotes = new HashMap<>();
 
 	// Votes in queue to process
-	private static List<VoteInfo> processVotes = new ArrayList<VoteInfo>();
+	private static List<VoteInfo> processVotes = new ArrayList<>();
 
-	private static List<URL> urls = new ArrayList<URL>();
+	private static List<URL> urls = new ArrayList<>();
 
 	static {
-		for (String url : CarbonWeb.getConf().getStringList("vote-data.notify-urls")) {
+		for (String url : CarbonWeb.inst.getConf().getStringList("vote-data.notify-urls")) {
 			try {
 				URL notifyUrl = new URL(url);
 				urls.add(notifyUrl);
 			} catch (Exception e) {
-				CarbonWeb.log.warn("Malformed URL in config (CarbonWeb.yml: vote-data.notify-urls): " + url);
+				CarbonWeb.inst.logWarn("Malformed URL in config (CarbonWeb.yml: vote-data.notify-urls): " + url);
 			}
 		}
 	}
@@ -44,7 +44,7 @@ public class VoteListener implements Listener {
 	public void onVote(VotifierEvent e) {
 		Vote v = e.getVote();
 		VoteInfo vi = new VoteInfo(v);
-		CarbonWeb.log.debug(v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
+		CarbonWeb.inst.logDebug(v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
 
 		// Check if the voting user is online, fetch their UUID locally, then add to the process queue.
 		for (Player p : CarbonWeb.server().getOnlinePlayers()) {
@@ -69,10 +69,10 @@ public class VoteListener implements Listener {
 	 * @see net.teamcarbon.carbonlib.Misc.BCrypt
 	 */
 	public static void processVotes() {
-		String pass = CarbonWeb.getConf().getString("vote-data.password", null);
+		String pass = CarbonWeb.inst.getConf().getString("vote-data.password", null);
 		if (!urls.isEmpty() && !processVotes.isEmpty()) {
 			if (pass == null || pass.isEmpty()) {
-				CarbonWeb.log.warn("The password hasn't been set! (CarbonWeb.yml: vote-data.password)");
+				CarbonWeb.inst.logWarn("The password hasn't been set! (CarbonWeb.yml: vote-data.password)");
 			}
 			for (URL url : urls) {
 
@@ -94,7 +94,7 @@ public class VoteListener implements Listener {
 
 					// Build the payload string
 					String payload = String.format("data=%s", URLEncoder.encode(jsonObj.toString(), "UTF-8"));
-					CarbonWeb.log.debug("Notify URL " + url.toString() + " with payload: " + payload);
+					CarbonWeb.inst.logDebug("Notify URL " + url.toString() + " with payload: " + payload);
 
 					// Send request
 					OutputStream output = con.getOutputStream();
@@ -104,7 +104,7 @@ public class VoteListener implements Listener {
 					processVotes.clear();
 
 				} catch (Exception e) {
-					CarbonWeb.log.warn("Encountered an error attempting to send vote data to notify-url: "
+					CarbonWeb.inst.logWarn("Encountered an error attempting to send vote data to notify-url: "
 							+ url.toString() + " -- Details:");
 					CarbonException.print(CarbonWeb.inst, e);
 				}
@@ -133,7 +133,7 @@ public class VoteListener implements Listener {
 
 		// Query the Mojang API to resolve the remaining names if there are any.
 		if (!uuidVotes.isEmpty()) {
-			UUIDFetcher f = new UUIDFetcher(new ArrayList<String>(uuidVotes.keySet()));
+			UUIDFetcher f = new UUIDFetcher(new ArrayList<>(uuidVotes.keySet()));
 			Map<String, UUID> res;
 			try {
 				res = f.call();

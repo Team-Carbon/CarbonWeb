@@ -24,9 +24,9 @@ public class CarbonWebNotice implements CommandExecutor {
 			sender.sendMessage(Clr.DARKAQUA + "/" + label + " set [msg]" + Clr.GRAY + " - Set and enable notice");
 			sender.sendMessage(Clr.DARKAQUA + "/" + label + " test [on|off]" + Clr.GRAY + " - Toggle test mode");
 			sender.sendMessage(Clr.GRAY + "---------");
-			sender.sendMessage(Clr.DARKAQUA + "Notice is currently " + (CarbonWeb.getConf().getBoolean("json-data.notice-enabled", false) ? "Enabled" : "Disabled"));
-			sender.sendMessage(Clr.DARKAQUA + "Testing is currently " + (CarbonWeb.getConf().getBoolean("json-data.testing-mode", false) ? "Enabled" : "Disabled"));
-			sender.sendMessage(Clr.DARKAQUA + "Current Notice: " + Clr.GRAY + CarbonWeb.getConf().getString("json-data.notice-message", ""));
+			sender.sendMessage(Clr.DARKAQUA + "Notice is currently " + (CarbonWeb.inst.getConf().getBoolean("json-data.notice-enabled", false) ? "Enabled" : "Disabled"));
+			sender.sendMessage(Clr.DARKAQUA + "Testing is currently " + (CarbonWeb.inst.getConf().getBoolean("json-data.testing-mode", false) ? "Enabled" : "Disabled"));
+			sender.sendMessage(Clr.DARKAQUA + "Current Notice: " + Clr.GRAY + CarbonWeb.inst.getConf().getString("json-data.notice-message", ""));
 			return true;
 
 		}
@@ -38,23 +38,23 @@ public class CarbonWebNotice implements CommandExecutor {
 			}
 			String notice = args[1];
 			for (int i = 2; i < args.length; i++) { notice += " " + args[i]; }
-			CarbonWeb.getConf().set("json-data.notice-enabled", false);
-			CarbonWeb.getConf().set("json-data.notice-message", notice);
-			CarbonWeb.saveConf();
+			CarbonWeb.inst.getConf().set("json-data.notice-enabled", false);
+			CarbonWeb.inst.getConf().set("json-data.notice-message", notice);
+			CarbonWeb.inst.saveConf();
 			sender.sendMessage(Clr.AQUA + "Message set");
 			return true;
 		}
 
 		if (args[0].equalsIgnoreCase("off")) {
-			CarbonWeb.getConf().set("json-data.notice-enabled", false);
-			CarbonWeb.saveConf();
+			CarbonWeb.inst.getConf().set("json-data.notice-enabled", false);
+			CarbonWeb.inst.saveConf();
 			sender.sendMessage(Clr.AQUA + "Message disabled");
 			return true;
 		}
 
 		if (args[0].equalsIgnoreCase("on")) {
-			CarbonWeb.getConf().set("json-data.notice-enabled", true);
-			CarbonWeb.saveConf();
+			CarbonWeb.inst.getConf().set("json-data.notice-enabled", true);
+			CarbonWeb.inst.saveConf();
 			sender.sendMessage(Clr.AQUA + "Message enabled");
 			return true;
 		}
@@ -66,15 +66,15 @@ public class CarbonWebNotice implements CommandExecutor {
 			}
 
 			if (args[1].equalsIgnoreCase("on")) {
-				CarbonWeb.getConf().set("json-data.testing-mode", true);
-				CarbonWeb.saveConf();
+				CarbonWeb.inst.getConf().set("json-data.testing-mode", true);
+				CarbonWeb.inst.saveConf();
 				sender.sendMessage(Clr.AQUA + "Testing enabled");
 				return true;
 			}
 
 			if (args[1].equalsIgnoreCase("off")) {
-				CarbonWeb.getConf().set("json-data.testing-mode", false);
-				CarbonWeb.saveConf();
+				CarbonWeb.inst.getConf().set("json-data.testing-mode", false);
+				CarbonWeb.inst.saveConf();
 				sender.sendMessage(Clr.AQUA + "Testing disabled");
 				return true;
 			}

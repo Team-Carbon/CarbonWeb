@@ -22,7 +22,7 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void playerLogin(PlayerLoginEvent e) {
 		if (e.getResult() == PlayerLoginEvent.Result.KICK_WHITELIST) {
-			CarbonWeb.log.debug("Set maintenance kick message for player: " + e.getPlayer().getName());
+			CarbonWeb.inst.logDebug("Set maintenance kick message for player: " + e.getPlayer().getName());
 			e.setKickMessage("Server is undergoing maintenance! Check again later.\nThere's a new website at team-carbon.net, check there for updates!");
 		}
 	}

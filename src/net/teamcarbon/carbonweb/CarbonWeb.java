@@ -18,8 +18,13 @@ import java.io.FileWriter;
 public class CarbonWeb extends CarbonPlugin {
 
 	private static Plugin ess;
+	public static CarbonWeb inst;
+
+	public String getDebugPath() { return "enable-debug-logging"; }
+	public void disablePlugin() {}
 
 	public void enablePlugin() {
+		inst = (CarbonWeb) getPlugin();
 		pm().registerEvents(new VoteListener(), this);
 		pm().registerEvents(new PlayerListener(), this);
 		server().getPluginCommand("CarbonWebReload").setExecutor(new CarbonWebReload());
@@ -62,9 +67,9 @@ public class CarbonWeb extends CarbonPlugin {
 		json.addProperty("version", inst.getServer().getVersion());
 		json.addProperty("count", Bukkit.getOnlinePlayers().size());
 		json.addProperty("capacity", Bukkit.getMaxPlayers());
-		json.addProperty("testing", getConf().getBoolean("json-data.testing-mode", false));
-		json.addProperty("notice", getConf().getBoolean("json-data.notice-enabled", false));
-		json.addProperty("notice-msg", getConf().getString("json-data.notice-message", ""));
+		json.addProperty("testing", inst.getConf().getBoolean("json-data.testing-mode", false));
+		json.addProperty("notice", inst.getConf().getBoolean("json-data.notice-enabled", false));
+		json.addProperty("notice-msg", inst.getConf().getString("json-data.notice-message", ""));
 		json.addProperty("whitelisted", server().hasWhitelist());
 
 		JsonArray jsonPlrs = new JsonArray();
@@ -105,7 +110,7 @@ public class CarbonWeb extends CarbonPlugin {
 			Gson gson = new GsonBuilder().create();
 			gson.toJson(json, writer);
 		} catch (Exception e) {
-			log.warn("Failed to write data.json! Details: ");
+			inst.log.warn("Failed to write data.json! Details: ");
 			CarbonException.print(inst, e);
 		}
 	}
