@@ -79,7 +79,9 @@ public class CarbonWeb extends JavaPlugin {
 				jsonPlr.addProperty("food", p.getFoodLevel());
 				jsonPlr.addProperty("flying", p.isFlying());
 				jsonPlr.addProperty("address", p.getAddress().getHostString());
-				jsonPlr.addProperty("group", perm.getPrimaryGroup(p));
+				if (perm != null && perm.hasGroupSupport()) {
+					jsonPlr.addProperty("group", perm.getPrimaryGroup(p));
+				}
 
 				if (ess != null) {
 					JsonObject jsonEss = new JsonObject();
