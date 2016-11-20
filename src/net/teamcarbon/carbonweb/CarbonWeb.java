@@ -27,8 +27,13 @@ public class CarbonWeb extends JavaPlugin {
 	public void disablePlugin() {}
 
 	public void onEnable() {
-		saveDefaultConfig();
 		PluginManager pm = Bukkit.getPluginManager();
+		if (!setupPerms()) {
+			getLogger().log(Level.SEVERE, "Failed to find Vault! Disabling " + getDescription().getName());
+			pm.disablePlugin(this);
+			return;
+		}
+		saveDefaultConfig();
 		pm.registerEvents(new VoteListener(this), this);
 		pm.registerEvents(new PlayerListener(this), this);
 		Bukkit.getPluginCommand("CarbonWebReload").setExecutor(new CarbonWebReload(this));
@@ -105,7 +110,7 @@ public class CarbonWeb extends JavaPlugin {
 		}
 	}
 
-	private boolean setupPermissions() {
+	private boolean setupPerms() {
 		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
 		if (permissionProvider != null) {
 			perm = permissionProvider.getProvider();

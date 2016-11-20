@@ -11,18 +11,14 @@ import java.util.logging.Level;
 
 public class PlayerListener implements Listener {
 
-	CarbonWeb plugin;
+	private CarbonWeb plugin;
 	public PlayerListener(CarbonWeb p) { plugin = p; }
 
 	@EventHandler
-	public void playerJoin(PlayerJoinEvent e) {
-		plugin.dumpInfo();
-	}
+	public void playerJoin(PlayerJoinEvent e) { plugin.dumpInfo(); }
 
 	@EventHandler
-	public void playerQuit(PlayerQuitEvent e) {
-		plugin.dumpInfo();
-	}
+	public void playerQuit(PlayerQuitEvent e) { plugin.dumpInfo(); }
 
 	@EventHandler
 	public void playerLogin(PlayerLoginEvent e) {
