@@ -2,8 +2,7 @@ package net.teamcarbon.carbonweb;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
-import net.teamcarbon.carbonlib.CarbonPlugin;
-import net.teamcarbon.carbonlib.Misc.CarbonException;
+import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.CarbonWebNotice;
 import net.teamcarbon.carbonweb.commands.CarbonWebReload;
 import net.teamcarbon.carbonweb.commands.CarbonWebVote;
@@ -11,69 +10,59 @@ import net.teamcarbon.carbonweb.listeners.*;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.logging.Level;
 
-public class CarbonWeb extends CarbonPlugin {
+public class CarbonWeb extends JavaPlugin {
 
-	private static Plugin ess;
-	public static CarbonWeb inst;
+	private Plugin ess;
+	public Permission perm;
 
 	public String getDebugPath() { return "enable-debug-logging"; }
 	public void disablePlugin() {}
 
 	public void enablePlugin() {
-		inst = (CarbonWeb) getPlugin();
-		pm().registerEvents(new VoteListener(), this);
-		pm().registerEvents(new PlayerListener(), this);
-		server().getPluginCommand("CarbonWebReload").setExecutor(new CarbonWebReload());
-		server().getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote());
-		server().getPluginCommand("CarbonWebNotice").setExecutor(new CarbonWebNotice());
+		PluginManager pm = Bukkit.getPluginManager();
+		pm.registerEvents(new VoteListener(this), this);
+		pm.registerEvents(new PlayerListener(this), this);
+		Bukkit.getPluginCommand("CarbonWebReload").setExecutor(new CarbonWebReload(this));
+		Bukkit.getPluginCommand("CarbonWebNotice").setExecutor(new CarbonWebNotice(this));
+		Bukkit.getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote());
 
 		// Find Essentials
-		if (pm().isPluginEnabled("Essentials")) { ess = pm().getPlugin("Essentials"); }
+		if (pm.isPluginEnabled("Essentials")) { ess = pm.getPlugin("Essentials"); }
 
 		// Repeating tasks
 
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-			public void run() {
-				dumpInfo();
-			}
+			public void run() { dumpInfo(); }
 		}, 0L, 100L);
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-			public void run() {
-				VoteListener.processVotes();
-			}
-		}, 100L, 200L);
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-			public void run() {
-				VoteListener.fetchUuids();
-			}
-		}, 200L, 200L);
 	}
 
-	public static void dumpInfo() {
+	public void dumpInfo() {
 		JsonObject json = new JsonObject();
 
 		json.addProperty("updated", System.currentTimeMillis()/1000L);
 
 		json.addProperty("address", "team-carbon.net");
-		json.addProperty("ip", inst.getServer().getIp());
-		json.addProperty("port", inst.getServer().getPort());
-		json.addProperty("motd", inst.getServer().getMotd());
-		json.addProperty("version", inst.getServer().getVersion());
+		json.addProperty("ip", getServer().getIp());
+		json.addProperty("port", getServer().getPort());
+		json.addProperty("motd", getServer().getMotd());
+		json.addProperty("version", getServer().getVersion());
 		json.addProperty("count", Bukkit.getOnlinePlayers().size());
 		json.addProperty("capacity", Bukkit.getMaxPlayers());
-		json.addProperty("testing", inst.getConf().getBoolean("json-data.testing-mode", false));
-		json.addProperty("notice", inst.getConf().getBoolean("json-data.notice-enabled", false));
-		json.addProperty("notice-msg", inst.getConf().getString("json-data.notice-message", ""));
-		json.addProperty("whitelisted", server().hasWhitelist());
+		json.addProperty("testing", getConfig().getBoolean("json-data.testing-mode", false));
+		json.addProperty("notice", getConfig().getBoolean("json-data.notice-enabled", false));
+		json.addProperty("notice-msg", getConfig().getString("json-data.notice-message", ""));
+		json.addProperty("whitelisted", getServer().hasWhitelist());
 
 		JsonArray jsonPlrs = new JsonArray();
-		if (inst.getServer().getOnlinePlayers().size() > 0) {
+		if (getServer().getOnlinePlayers().size() > 0) {
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				JsonObject jsonPlr = new JsonObject();
 				jsonPlr.addProperty("name", p.getName());
@@ -84,7 +73,7 @@ public class CarbonWeb extends CarbonPlugin {
 				jsonPlr.addProperty("food", p.getFoodLevel());
 				jsonPlr.addProperty("flying", p.isFlying());
 				jsonPlr.addProperty("address", p.getAddress().getHostString());
-				jsonPlr.addProperty("group", perm().getPrimaryGroup(p));
+				jsonPlr.addProperty("group", perm.getPrimaryGroup(p));
 
 				if (ess != null) {
 					JsonObject jsonEss = new JsonObject();
@@ -106,13 +95,21 @@ public class CarbonWeb extends CarbonPlugin {
 			json.add("players", new JsonArray());
 		}
 
-		try (JsonWriter writer = new JsonWriter(new FileWriter(new File(inst.getDataFolder(), "data.json")))) {
+		try (JsonWriter writer = new JsonWriter(new FileWriter(new File(getDataFolder(), "data.json")))) {
 			Gson gson = new GsonBuilder().create();
 			gson.toJson(json, writer);
 		} catch (Exception e) {
-			inst.log.warn("Failed to write data.json! Details: ");
-			CarbonException.print(inst, e);
+			getLogger().log(Level.WARNING, "Failed to write data.json! Details: ");
+			e.printStackTrace();
 		}
+	}
+
+	private boolean setupPermissions() {
+		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+		if (permissionProvider != null) {
+			perm = permissionProvider.getProvider();
+		}
+		return (perm != null);
 	}
 
 }

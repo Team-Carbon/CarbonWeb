@@ -10,14 +10,17 @@ import org.bukkit.command.CommandSender;
 
 public class CarbonWebReload implements CommandExecutor {
 
+	private CarbonWeb plugin;
+	public CarbonWebReload(CarbonWeb p) { plugin = p; }
+
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!MiscUtils.perm(sender, "carbonweb.reload")) {
 			Messages.send(sender, Message.NO_PERM);
 			return true;
 		}
 
-		CarbonWeb.inst.reloadConf();
-		sender.sendMessage("Reloaded " + CarbonWeb.inst.getDescription().getName());
+		plugin.reloadConfig();
+		sender.sendMessage("Reloaded " + plugin.getDescription().getName());
 
 		return true;
 	}
