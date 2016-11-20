@@ -1,9 +1,7 @@
 package net.teamcarbon.carbonweb.commands;
 
-import net.teamcarbon.carbonlib.Misc.Messages;
-import net.teamcarbon.carbonlib.Misc.Messages.Message;
-import net.teamcarbon.carbonlib.Misc.MiscUtils;
 import net.teamcarbon.carbonweb.CarbonWeb;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,8 +12,8 @@ public class CarbonWebReload implements CommandExecutor {
 	public CarbonWebReload(CarbonWeb p) { plugin = p; }
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (!MiscUtils.perm(sender, "carbonweb.reload")) {
-			Messages.send(sender, Message.NO_PERM);
+		if (!plugin.perm.has(sender, "carbonweb.reload")) {
+			sender.sendMessage(ChatColor.RED + "You don't have permission to do that!");
 			return true;
 		}
 
