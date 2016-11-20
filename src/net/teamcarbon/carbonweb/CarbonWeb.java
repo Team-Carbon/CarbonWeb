@@ -26,7 +26,8 @@ public class CarbonWeb extends JavaPlugin {
 	public String getDebugPath() { return "enable-debug-logging"; }
 	public void disablePlugin() {}
 
-	public void enablePlugin() {
+	public void onEnable() {
+		saveDefaultConfig();
 		PluginManager pm = Bukkit.getPluginManager();
 		pm.registerEvents(new VoteListener(this), this);
 		pm.registerEvents(new PlayerListener(this), this);
