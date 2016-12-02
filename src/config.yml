@@ -1,9 +1,0 @@
-enable-debug-messages: true
-vote-data:
-  notify-urls: []
-  notify-urls-password: ""
-  password: ""
-json-data:
-  testing-mode: false
-  notice-enabled: false
-  notice-message: ""
