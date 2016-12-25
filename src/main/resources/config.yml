@@ -1,0 +1,25 @@
+enable-debug-messages: true
+vote-data:
+  notify-urls: []
+  notify-urls-password: ""
+  password: ""
+json-data:
+  testing-mode: false
+  notice-enabled: false
+  notice-message: ""
+database:
+  hostname: "localhost:3306"
+  username: "databaseuser"
+  password: "databasepass"
+  database: "databasename"
+auth-levels:
+  owner: 0
+  founder: 1
+  admin: 1
+  moderator: 2
+  carbon: 128
+  platinum: 129
+  steel: 130
+  neon: 131
+  vip: 132
+  initiate: 254

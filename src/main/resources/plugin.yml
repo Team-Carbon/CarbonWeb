@@ -1,0 +1,32 @@
+name: ${artifactId}
+author: OffLuffy
+description: Web utilties for Team-Carbon
+version: ${version}
+main: net.teamcarbon.carbonweb.CarbonWeb
+depends: [Votifier]
+commands:
+  carbonwebreload:
+    description: Reloads config values
+    usage: /cwreload
+    aliases: [cwreload, webreload, cwr]
+    permission: carbonweb.reload
+  carbonwebnotice:
+    description: Set or toggle the JSON notice
+    usage: /cwnotice [on|off|set <msg>|test <on|off>]
+    aliases: [cwnotice, webnotice, notice]
+    permission: carbonweb.notice
+  carbonwebvote:
+    description: Vote command
+    usage: /vote
+    aliases: [cwvote, webvote, cwv, votes]
+  carbonweblink:
+    description: Link your minecraft account to the website
+    usage: /link
+    aliases: [cwlink, weblink, cwl, link]
+permission:
+  carbonweb.reload:
+    description: Allows reloading CarbonWeb's config
+    default: op
+  carbonweb.notice:
+    description: Allows setting and toggling the JSON notice
+    default: op
