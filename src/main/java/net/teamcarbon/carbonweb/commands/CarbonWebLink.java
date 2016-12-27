@@ -8,8 +8,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
@@ -40,9 +38,7 @@ public class CarbonWebLink implements CommandExecutor {
 
 				try {
 
-					ResultSet res;
-
-					res = execq(f("SELECT COUNT(*) FROM users WHERE unique_key='%s'", key));
+					ResultSet res = plugin.execq(plugin.f("SELECT COUNT(*) FROM users WHERE unique_key='%s'", key));
 					if (res != null) {
 						res.first();
 						int count = res.getInt(1);
@@ -52,7 +48,7 @@ public class CarbonWebLink implements CommandExecutor {
 							return true;
 						} else if (count > 1) {
 							sender.sendMessage(ChatColor.RED + "There seems to be duplicate keys. Let an admin know!");
-							plugin.getLogger().warning(f("Found duplicate key (%s) in users database when trying to link with %s's account", key, p.getName()));
+							plugin.getLogger().warning(plugin.f("Found duplicate key (%s) in users database when trying to link with %s's account", key, p.getName()));
 							return true;
 						}
 					} else {
@@ -61,7 +57,7 @@ public class CarbonWebLink implements CommandExecutor {
 					}
 
 					String username = "", userid = "";
-					res = execq(f("SELECT user_id,user_name FROM users WHERE unique_key='%s'", key));
+					res = plugin.execq(plugin.f("SELECT user_id,user_name FROM users WHERE unique_key='%s'", key));
 					if (res != null) {
 						res.first();
 						username = res.getString("user_name");
@@ -79,18 +75,18 @@ public class CarbonWebLink implements CommandExecutor {
 						auth = plugin.getConfig().getInt("auth-levels." + g, 254);
 					}
 
-					int updated = execu(f("UPDATE users SET minecraft_id='%s',minecraft_name='%s',auth_level='%d',unique_key='' WHERE unique_key='%s'", uuid, name, auth, key));
+					int updated = plugin.execu(plugin.f("UPDATE users SET minecraft_id='%s',minecraft_name='%s',auth_level='%d',unique_key='' WHERE unique_key='%s'", uuid, name, auth, key));
 					if (updated > 0) {
 						sender.sendMessage(ChatColor.AQUA + "Your Minecraft account has been linked to " + username + "'s account (ID: " + userid + ")");
 					} else {
 						sender.sendMessage(ChatColor.RED + "There was an error linking your account. Let an admin know!");
-						plugin.getLogger().warning(f("An error occured trying to link minecraft account (%s / %s) with web account, no rows were updated.", p.getName(), p.getUniqueId().toString()));
+						plugin.getLogger().warning(plugin.f("An error occured trying to link minecraft account (%s / %s) with web account, no rows were updated.", p.getName(), p.getUniqueId().toString()));
 					}
 					return true;
 
 				} catch (SQLException e) {
 					sender.sendMessage(ChatColor.RED + "An error occured. Let an admin know!");
-					plugin.getLogger().warning(f("An error occured trying to link minecraft account (%s / %s) with web account, an exception occured.", p.getName(), p.getUniqueId().toString()));
+					plugin.getLogger().warning(plugin.f("An error occured trying to link minecraft account (%s / %s) with web account, an exception occured.", p.getName(), p.getUniqueId().toString()));
 					e.printStackTrace();
 					return true;
 				}
@@ -104,34 +100,6 @@ public class CarbonWebLink implements CommandExecutor {
 		sender.sendMessage(ChatColor.GRAY + "Visit " + ChatColor.GOLD + "http://team-carbon.net/?p=link" + ChatColor.GRAY + " for instructions!");
 
 		return true;
-	}
-
-	private String f(String f, Object ... o) { return String.format(Locale.ENGLISH, f, o); }
-
-	private ResultSet execq(String q) {
-		try {
-			plugin.getLogger().info("Executing query: " + q);
-			Connection c = plugin.getConn();
-			PreparedStatement ps = c.prepareStatement(q);
-			return ps.executeQuery();
-		} catch (SQLException e) {
-			plugin.getLogger().warning("Encountered an error running query: " + q);
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	private int execu(String q) {
-		try {
-			plugin.getLogger().info("Executing query: " + q);
-			Connection c = plugin.getConn();
-			PreparedStatement ps = c.prepareStatement(q);
-			return ps.executeUpdate();
-		} catch (SQLException e) {
-			plugin.getLogger().warning("Encountered an error running query: " + q);
-			e.printStackTrace();
-			return 0;
-		}
 	}
 
 }

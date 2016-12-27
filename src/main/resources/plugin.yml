@@ -23,6 +23,10 @@ commands:
     description: Link your minecraft account to the website
     usage: /link
     aliases: [cwlink, weblink, cwl, link]
+  carbonwebrewar:
+    description: Manage vote rewards
+    usage: /reward [addtier|additem|remtier|remitem|edittier|edititem]
+    aliases: [cwreward webreward cwrw, reward]
 permission:
   carbonweb.reload:
     description: Allows reloading CarbonWeb's config

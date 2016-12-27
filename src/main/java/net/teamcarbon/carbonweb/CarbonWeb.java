@@ -17,7 +17,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.logging.Level;
 
 public class CarbonWeb extends JavaPlugin {
@@ -42,6 +45,7 @@ public class CarbonWeb extends JavaPlugin {
 		Bukkit.getPluginCommand("CarbonWebReload").setExecutor(new CarbonWebReload(this));
 		Bukkit.getPluginCommand("CarbonWebNotice").setExecutor(new CarbonWebNotice(this));
 		Bukkit.getPluginCommand("CarbonWebLink").setExecutor(new CarbonWebLink(this));
+		Bukkit.getPluginCommand("CarbonWebReward").setExecutor(new CarbonWebReward(this));
 		Bukkit.getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote());
 
 		// Find Essentials
@@ -83,6 +87,32 @@ public class CarbonWeb extends JavaPlugin {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+
+	public String f(String f, Object ... o) { return String.format(Locale.ENGLISH, f, o); }
+
+	public ResultSet execq(String q) {
+		try {
+			Connection c = getConn();
+			PreparedStatement ps = c.prepareStatement(q);
+			return ps.executeQuery();
+		} catch (SQLException e) {
+			Bukkit.getLogger().warning("Encountered an error running query: " + q);
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public int execu(String q) {
+		try {
+			Connection c = getConn();
+			PreparedStatement ps = c.prepareStatement(q);
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			Bukkit.getLogger().warning("Encountered an error running query: " + q);
+			e.printStackTrace();
+			return 0;
 		}
 	}
 

@@ -3,6 +3,7 @@ vote-data:
   notify-urls: []
   notify-urls-password: ""
   password: ""
+  rewards: {}
 json-data:
   testing-mode: false
   notice-enabled: false
