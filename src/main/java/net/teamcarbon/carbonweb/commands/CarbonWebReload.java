@@ -12,6 +12,7 @@ public class CarbonWebReload implements CommandExecutor {
 	public CarbonWebReload(CarbonWeb p) { plugin = p; }
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+
 		if (!plugin.perm.has(sender, "carbonweb.reload")) {
 			sender.sendMessage(ChatColor.RED + "You don't have permission to do that!");
 			return true;
