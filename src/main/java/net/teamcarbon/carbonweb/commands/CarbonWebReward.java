@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class CarbonWebReward implements CommandExecutor {
 
@@ -26,6 +27,19 @@ public class CarbonWebReward implements CommandExecutor {
 		//TIER.set("", null);
 	}
 
+	/*
+
+	reward-tier:
+	  min-items: 2
+	  max-items: 3
+	  items:
+	    reward-item:
+	      min-amount: 3
+	      max-amount: 5
+	      item: (serialized item)
+
+	 */
+
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
 		if (!plugin.perm.has(sender, "carbonweb.editrewards")) {
@@ -36,8 +50,16 @@ public class CarbonWebReward implements CommandExecutor {
 		if (args.length < 1) { return false; } // return false to list usage
 
 		String act = args[0].toLowerCase();
+
 		String tier = args.length > 1 ? args[1].toLowerCase() : "";
 		String item = args.length > 2 ? args[2].toLowerCase() : "";
+
+		String tprop = args.length > 2 ? args[2].toLowerCase() : "";
+		String tval = args.length > 3 ? args[3].toLowerCase() : "";
+
+		String iitem = args.length > 2 ? args[2].toLowerCase() : "";
+		String iprop = args.length > 3 ? args[3].toLowerCase() : "";
+		String ival = args.length > 4 ? args[4].toLowerCase() : "";
 
 		switch (act) {
 			case "listtiers":
@@ -48,14 +70,25 @@ public class CarbonWebReward implements CommandExecutor {
 
 			case "listitems":
 			case "li":
-				if (tierExists(tier))
-				break;
+				if (args.length < 2) {
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw listitems tier");
+					return true;
+				}
+				if (tierExists(tier)) {
+					sender.sendMessage(ChatColor.AQUA + "Items in " + tier + " tier:");
+					sender.sendMessage(ChatColor.GREEN + getItemList(tier));
+					return true;
+				} else {
+					sender.sendMessage(ChatColor.RED + "Tier doesn't exist. Available tiers:");
+					sender.sendMessage(ChatColor.RED + getTierList());
+					return true;
+				}
 
 			case "newtier":
 			case "addtier":
 			case "at": // cwrw at tiername
 				if (args.length < 2) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw addtier tierName");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw addtier tier");
 					sender.sendMessage(ChatColor.GRAY + "This creates an empty rewards tier. Add items to it with "
 							+ "/cwrw additem");
 					return true;
@@ -74,7 +107,7 @@ public class CarbonWebReward implements CommandExecutor {
 			case "additem":
 			case "ai": // cwrw ai tier item
 				if (args.length < 3) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw additem tierName itemName");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw additem tier item");
 					sender.sendMessage(ChatColor.GRAY + "itemName can be anything, not just valid item names. "
 							+ "The item saved will be what you're holding when you add an item. "
 							+ "This allows you to save items with enchants and additional meta. "
@@ -116,7 +149,7 @@ public class CarbonWebReward implements CommandExecutor {
 			case "removetier":
 			case "rt": // cwrw rt tier
 				if (args.length < 2) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw remtier tierName");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw remtier tier");
 					return true;
 				}
 
@@ -135,11 +168,9 @@ public class CarbonWebReward implements CommandExecutor {
 			case "removeitem":
 			case "ri": // cwrw ri tier item
 				if (args.length < 2) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw remitem tierName itemName");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw remitem tier item");
 					return true;
 				}
-
-				item = args[2].toLowerCase();
 
 				if (!tierExists(tier)) {
 					sender.sendMessage(ChatColor.RED + "Tier doesn't exist. Available tiers:");
@@ -148,8 +179,8 @@ public class CarbonWebReward implements CommandExecutor {
 				}
 
 				if (!itemExists(tier, item)) {
-					sender.sendMessage(ChatColor.RED + "Item doesn't exist. Available tiers:");
-					sender.sendMessage(ChatColor.RED + getTierList());
+					sender.sendMessage(ChatColor.RED + "Item doesn't exist. Available items:");
+					sender.sendMessage(ChatColor.RED + getItemList(tier));
 					return true;
 				}
 
@@ -157,17 +188,163 @@ public class CarbonWebReward implements CommandExecutor {
 
 			case "edittier":
 			case "et": // cwrw et tier prop value
-				break;
+				if (args.length < 3) {
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw edittier tier prop [val]");
+					sender.sendMessage(ChatColor.GRAY + "Properties: min, max");
+					sender.sendMessage(ChatColor.GRAY + "'min' and 'max' determines how many items are given. "
+							+ "Min must be at least 1.");
+					return true;
+				}
+
+				if (!tierExists(tier)) {
+					sender.sendMessage(ChatColor.RED + "Tier doesn't exist. Available tiers:");
+					sender.sendMessage(ChatColor.RED + getTierList());
+					return true;
+				}
+
+				switch (tprop) {
+					case "item":
+
+						if (!(sender instanceof Player)) {
+							sender.sendMessage(ChatColor.RED + "You must be in-game to do that!");
+							return true;
+						}
+
+						p = (Player) sender;
+						hand = p.getInventory().getItemInMainHand();
+						if (hand != null && hand.getType() != Material.AIR) {
+							hand = new ItemStack(hand);
+							hand.setAmount(1);
+							plugin.getConfig().set(itemPath(tier, item), hand);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + " to the currently held item");
+							return true;
+						} else {
+							sender.sendMessage(ChatColor.RED + "Must be holding the item to add to this tier");
+							return true;
+						}
+					case "min":
+					case "minitems":
+					case "itemsmin":
+					case "min-items":
+					case "items-min":
+						try {
+							int min = Integer.parseInt(tval);
+							if (min < 1) {
+								sender.sendMessage(ChatColor.RED + "Min must be at least 1");
+								return true;
+							}
+							int max = plugin.getConfig().getInt(tierPath(tier) + ".max-items", 1);
+							if (min > max) {
+								sender.sendMessage(ChatColor.RED + "Min must be less than max (max = " + max + "), "
+										+ "increase max, then you can set min again.");
+								return true;
+							}
+							plugin.getConfig().set(tierPath(tier) + ".min-items", min);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".min-items to " + min);
+							return true;
+						} catch (Exception e) {
+							sender.sendMessage(ChatColor.RED + "Min must be a whole number. (You said \"" + tval + "\"");
+							return true;
+						}
+					case "max":
+					case "maxitems":
+					case "itemsmax":
+					case "max-items":
+					case "items-max":
+						try {
+							int max = Integer.parseInt(tval);
+							if (max < 1) {
+								sender.sendMessage(ChatColor.RED + "Max must be at least 1");
+								return true;
+							}
+							int min = plugin.getConfig().getInt(tierPath(tier) + ".min-items", 1);
+							if (max < min) {
+								sender.sendMessage(ChatColor.RED + "Max must be more than min (min = " + min + "), "
+										+ "decrease min, then you can set max again.");
+								return true;
+							}
+							plugin.getConfig().set(tierPath(tier) + ".max-items", max);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".max-items to " + max);
+							return true;
+						} catch (Exception e) {
+							sender.sendMessage(ChatColor.RED + "Max must be a whole number. (You said \"" + tval + "\"");
+							return true;
+						}
+					default:
+						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edittier");
+						return true;
+				}
 
 			case "edititem":
 			case "ei": // cwrw ei tier item prop value
-				break;
+				if (args.length < 2) {
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw edititem tier item prop [val]");
+					sender.sendMessage(ChatColor.GRAY + "Properties: min, max");
+					sender.sendMessage(ChatColor.GRAY + "'item' uses the item in-hand, no value is provided.");
+					sender.sendMessage(ChatColor.GRAY + "'min' and 'max' determines how much of the item is given. "
+							+ "A random value in this range is chosen. Min must be at least 1.");
+					sender.sendMessage(ChatColor.GRAY + "'weight' is how likely the item is to be picked from the "
+							+ "list. An item can be picked more than once. Weight values can be any number, "
+							+ "higher numbers are more likely to be picked.");
+					return true;
+				}
+
+				if (!tierExists(tier)) {
+					sender.sendMessage(ChatColor.RED + "Tier doesn't exist. Available tiers:");
+					sender.sendMessage(ChatColor.RED + getTierList());
+					return true;
+				}
+
+				if (!itemExists(tier, item)) {
+					sender.sendMessage(ChatColor.RED + "Item doesn't exist. Available items:");
+					sender.sendMessage(ChatColor.RED + getItemList(tier));
+					return true;
+				}
+
+				switch (iprop) {
+					case "item":
+
+						if (!(sender instanceof Player)) {
+							sender.sendMessage(ChatColor.RED + "You must be in-game to do that!");
+							return true;
+						}
+
+						p = (Player) sender;
+						hand = p.getInventory().getItemInMainHand();
+						if (hand != null && hand.getType() != Material.AIR) {
+							hand = new ItemStack(hand);
+							hand.setAmount(1);
+							plugin.getConfig().set(itemPath(tier, item), hand);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + " to the currently held item");
+							return true;
+						} else {
+							sender.sendMessage(ChatColor.RED + "Must be holding the item to add to this tier");
+							return true;
+						}
+					case "min":
+					case "minamount":
+					case "amountmin":
+					case "min-amount":
+					case "amount-min":
+						break;
+					case "max":
+					case "maxamount":
+					case "amountmax":
+					case "max-amount":
+					case "amount-max":
+						break;
+					default:
+						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edititem");
+						return true;
+				}
+				return true;
 
 			default: return false;
 		}
-
-		return true;
-
 	}
 
 	private String tierPath(String tier) { return "vote-data.rewards." + tier; }
@@ -178,6 +355,15 @@ public class CarbonWebReward implements CommandExecutor {
 		Iterator<String> ti = tiers.iterator();
 		String list = ti.hasNext() ? ti.next() : "";
 		while (ti.hasNext()) { list += ", " + ti.next(); }
+		return list;
+	}
+
+	private String getItemList(String tier) {
+		if (!tierExists(tier)) return "";
+		Set<String> items = plugin.getConfig().getConfigurationSection(tierPath(tier)+".items").getKeys(false);
+		Iterator<String> ii = items.iterator();
+		String list = ii.hasNext() ? ii.next() : "";
+		while (ii.hasNext()) { list += ", " + ii.next(); }
 		return list;
 	}
 
