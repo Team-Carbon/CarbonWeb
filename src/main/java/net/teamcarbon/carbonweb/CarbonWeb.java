@@ -7,12 +7,14 @@ import com.zaxxer.hikari.HikariDataSource;
 import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.*;
 import net.teamcarbon.carbonweb.listeners.*;
+import net.teamcarbon.carbonweb.tasks.VoteRewardsTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -27,6 +29,7 @@ public class CarbonWeb extends JavaPlugin {
 
 	private Plugin ess;
 	private HikariDataSource hds;
+	private BukkitTask voteRewardsTask;
 	public Permission perm;
 
 	public String getDebugPath() { return "enable-debug-logging"; }
@@ -58,9 +61,14 @@ public class CarbonWeb extends JavaPlugin {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 			public void run() { dumpInfo(); }
 		}, 0L, 100L);
+
+		voteRewardsTask = new VoteRewardsTask(this).runTaskTimer(this, 15, 15);
+
 	}
 
 	public void reload() {
+		voteRewardsTask.cancel();
+
 		reloadConfig();
 		String jdbcUrl = "jdbc:mysql://"
 				+ getConfig().getString("database.hostname", "localhost:3306") + "/"
@@ -79,6 +87,8 @@ public class CarbonWeb extends JavaPlugin {
 		hc.setPassword(pass);
 		hc.validate();
 		hds = new HikariDataSource(hc);
+
+		voteRewardsTask = new VoteRewardsTask(this).runTaskTimer(this, 15, 15);
 	}
 
 	public Connection getConn() {

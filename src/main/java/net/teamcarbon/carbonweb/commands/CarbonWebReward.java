@@ -168,7 +168,7 @@ public class CarbonWebReward implements CommandExecutor {
 			case "removeitem":
 			case "ri": // cwrw ri tier item
 				if (args.length < 2) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw remitem tier item");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw " + act + " tier item");
 					return true;
 				}
 
@@ -189,10 +189,10 @@ public class CarbonWebReward implements CommandExecutor {
 			case "edittier":
 			case "et": // cwrw et tier prop value
 				if (args.length < 3) {
-					sender.sendMessage(ChatColor.RED + "Usage: /cwrw edittier tier prop [val]");
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw " + act + " tier prop [val]");
 					sender.sendMessage(ChatColor.GRAY + "Properties: min, max");
 					sender.sendMessage(ChatColor.GRAY + "'min' and 'max' determines how many items are given. "
-							+ "Min must be at least 1.");
+							+ "Both must be at least 1.");
 					return true;
 				}
 
@@ -246,6 +246,7 @@ public class CarbonWebReward implements CommandExecutor {
 							return true;
 						} catch (Exception e) {
 							sender.sendMessage(ChatColor.RED + "Min must be a whole number. (You said \"" + tval + "\"");
+							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edittier tier prop [val]");
 							return true;
 						}
 					case "max":
@@ -271,10 +272,11 @@ public class CarbonWebReward implements CommandExecutor {
 							return true;
 						} catch (Exception e) {
 							sender.sendMessage(ChatColor.RED + "Max must be a whole number. (You said \"" + tval + "\"");
+							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edittier tier prop [val]");
 							return true;
 						}
 					default:
-						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edittier");
+						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edittier (/cwrw et)");
 						return true;
 				}
 
@@ -285,7 +287,7 @@ public class CarbonWebReward implements CommandExecutor {
 					sender.sendMessage(ChatColor.GRAY + "Properties: min, max");
 					sender.sendMessage(ChatColor.GRAY + "'item' uses the item in-hand, no value is provided.");
 					sender.sendMessage(ChatColor.GRAY + "'min' and 'max' determines how much of the item is given. "
-							+ "A random value in this range is chosen. Min must be at least 1.");
+							+ "A random value in this range is chosen. Both must be at least 1.");
 					sender.sendMessage(ChatColor.GRAY + "'weight' is how likely the item is to be picked from the "
 							+ "list. An item can be picked more than once. Weight values can be any number, "
 							+ "higher numbers are more likely to be picked.");
@@ -330,19 +332,57 @@ public class CarbonWebReward implements CommandExecutor {
 					case "amountmin":
 					case "min-amount":
 					case "amount-min":
-						break;
+						try {
+							int min = Integer.parseInt(ival);
+							if (min < 1) {
+								sender.sendMessage(ChatColor.RED + "Min must be at least 1");
+								return true;
+							}
+							int max = plugin.getConfig().getInt(itemPath(tier, item) + ".max-amount", 1);
+							if (min > max) {
+								sender.sendMessage(ChatColor.RED + "Min must be less than max (max = " + max + "), "
+										+ "increase max, then you can set min again.");
+								return true;
+							}
+							plugin.getConfig().set(itemPath(tier, item) + ".min-amount", min);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + ".min-amount to " + min);
+							return true;
+						} catch (Exception e) {
+							sender.sendMessage(ChatColor.RED + "Min must be a whole number. (You said \"" + ival + "\"");
+							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edititem tier item prop [val]");
+							return true;
+						}
 					case "max":
 					case "maxamount":
 					case "amountmax":
 					case "max-amount":
 					case "amount-max":
-						break;
+						try {
+							int max = Integer.parseInt(tval);
+							if (max < 1) {
+								sender.sendMessage(ChatColor.RED + "Max must be at least 1");
+								return true;
+							}
+							int min = plugin.getConfig().getInt(tierPath(tier) + ".min-items", 1);
+							if (max < min) {
+								sender.sendMessage(ChatColor.RED + "Max must be more than min (min = " + min + "), "
+										+ "decrease min, then you can set max again.");
+								return true;
+							}
+							plugin.getConfig().set(tierPath(tier) + ".max-items", max);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".max-items to " + max);
+							return true;
+						} catch (Exception e) {
+							sender.sendMessage(ChatColor.RED + "Max must be a whole number. (You said \"" + tval + "\"");
+							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edititem tier item prop [val]");
+							return true;
+						}
 					default:
-						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edititem");
+						sender.sendMessage(ChatColor.RED + "Propery doesn't exist. To list properties, use /cwrw edititem (/cwrw ei)");
 						return true;
 				}
-				return true;
-
 			default: return false;
 		}
 	}

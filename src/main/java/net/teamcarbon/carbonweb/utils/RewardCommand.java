@@ -6,8 +6,6 @@ import java.sql.Time;
  * <p>Represents a command fetched from the database to be executed.
  * These commands are designed to be a response to voting in order
  * to issue rewards.</p>
- * <p>These are read-only (only designed to hold data).
- * Setting data members have no implemented function.</p>
  */
 
 public class RewardCommand {
@@ -26,6 +24,9 @@ public class RewardCommand {
 		this.executed = executed;
 		this.success = success;
 	}
+
+	public void setExecuted(boolean e) { executed = e; }
+	public void setSuccess(boolean s) { success = s; }
 
 	public int getId() { return id; }
 	public Time getTimeAdded() { return timeAdded; }
