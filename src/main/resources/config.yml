@@ -1,7 +1,6 @@
 enable-debug-messages: true
 vote-data:
   notify-urls: []
-  notify-urls-password: ""
   password: ""
   rewards: {}
 json-data:
