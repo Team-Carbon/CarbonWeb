@@ -20,6 +20,7 @@ public class VoteRewardsTask extends BukkitRunnable {
 	}
 
 	public void run() {
+		Bukkit.getLogger().info("Executing VoteRewardTask");
 		List<RewardCommand> cmds = new ArrayList<>();
 		ResultSet res = plugin.execq("SELECT * FROM commands WHERE executed=0");
 		if (res != null) {
@@ -34,6 +35,7 @@ public class VoteRewardsTask extends BukkitRunnable {
 					boolean success = res.getBoolean("success");
 					RewardCommand rc = new RewardCommand(id, time, cmd, target, source, executed, success);
 					cmds.add(rc);
+					Bukkit.getLogger().info("Cached command: " + rc.getCommand());
 				}
 			} catch (Exception e) {
 				plugin.getLogger().warning("Encountered an error iterating over result set rows (vote reward task):");
@@ -42,11 +44,14 @@ public class VoteRewardsTask extends BukkitRunnable {
 			String successIds = "";
 			if (!cmds.isEmpty()) {
 				for (RewardCommand rc : cmds) {
+					Bukkit.getLogger().info("Executing command: " + rc.getCommand());
 					if (rc.hasTarget()) {
 						OfflinePlayer op = Bukkit.getPlayer(rc.getTarget());
 						if (op != null && op.isOnline()) {
 							Bukkit.dispatchCommand(Bukkit.getConsoleSender(), rc.getCommand());
 							rc.setExecuted(true);
+						} else {
+							Bukkit.getLogger().info("Required target not found");
 						}
 					} else {
 						Bukkit.dispatchCommand(Bukkit.getConsoleSender(), rc.getCommand());
@@ -59,6 +64,7 @@ public class VoteRewardsTask extends BukkitRunnable {
 			successIds = "(" + successIds + ")";
 			String query = "UPDATE commands SET executed=true WHERE cmd_id in " + successIds;
 			plugin.execu(query);
+			cmds.clear();
 		} else {
 			plugin.getLogger().warning("Encountered an error querying the database. (null ResultSet)");
 			return;
