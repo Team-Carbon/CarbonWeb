@@ -6,18 +6,21 @@ import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 import net.teamcarbon.carbonweb.CarbonWeb;
 import net.teamcarbon.carbonweb.utils.BCrypt;
+import net.teamcarbon.carbonweb.utils.RandomCollection;
 import net.teamcarbon.carbonweb.utils.UUIDFetcher;
 import net.teamcarbon.carbonweb.utils.VoteInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 public class VoteListener implements Listener {
@@ -50,10 +53,44 @@ public class VoteListener implements Listener {
 		plugin.getLogger().log(Level.FINE, v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
 
 		// Check if the voting user is online, fetch their UUID locally, then add to the process queue.
-		for (Player p :plugin.getServer().getOnlinePlayers()) {
+		for (Player p : plugin.getServer().getOnlinePlayers()) {
 			if (vi.user.equalsIgnoreCase(p.getName())) {
 				vi.setUuid(p.getUniqueId());
 				processVotes.add(vi);
+
+				for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
+
+					if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
+
+						RandomCollection<String> items = new RandomCollection<>();
+						for (String item : plugin.getConfig().getConfigurationSection("vote-data.rewards." + tier).getKeys(false)) {
+							items.add(plugin.getConfig().getInt("vote-data.rewards." + tier, 0), item);
+						}
+
+						int min = plugin.getConfig().getInt("vote-data.rewards." + tier + ".min-items", 1);
+						int max = plugin.getConfig().getInt("vote-data.rewards." + tier + ".max-items", 1);
+						int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
+
+						List<ItemStack> givenItems = new ArrayList<>();
+						for (int i = 0; i < amount; i++) {
+
+							String itemName = items.next();
+							int minAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".min-amount");
+							int maxAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".max-amount");
+
+							int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount+1);
+
+							ItemStack is = new ItemStack(plugin.getConfig().getItemStack("vote-data.rewards." + tier + "." + itemName + ".item"));
+							is.setAmount(rndAmount);
+
+							givenItems.add(is);
+
+						}
+
+					}
+
+				}
+
 			}
 		}
 
