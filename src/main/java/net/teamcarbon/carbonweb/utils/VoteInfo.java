@@ -8,6 +8,7 @@ import java.util.UUID;
 public class VoteInfo {
 
 	public boolean done = false;
+	private int parseAttempts = 0;
 	public final String user, addr, time, serv;
 
 	private UUID uuid;
@@ -36,4 +37,7 @@ public class VoteInfo {
 		obj.addProperty("service", serv);
 		return obj;
 	}
+
+	public int getParseAttempts() { return parseAttempts; }
+	public void incParseAttempts() { parseAttempts++; }
 }

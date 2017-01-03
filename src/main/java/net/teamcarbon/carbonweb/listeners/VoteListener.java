@@ -36,6 +36,14 @@ public class VoteListener implements Listener {
 				plugin.getLogger().log(Level.WARNING, "Malformed URL in config (CarbonWeb.yml: vote-data.notify-urls): " + url);
 			}
 		}
+
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+			public void run() { processVotes(); }
+		}, 100L, 200L);
+
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+			public void run() { fetchUuids(); }
+		}, 200L, 200L);
 	}
 
 	// Votes that need to have UUIDs resolved
@@ -57,96 +65,87 @@ public class VoteListener implements Listener {
 			if (vi.user.equalsIgnoreCase(p.getName())) {
 				vi.setUuid(p.getUniqueId());
 				processVotes.add(vi);
-
-				for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
-
-					if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
-
-						RandomCollection<String> items = new RandomCollection<>();
-						for (String item : plugin.getConfig().getConfigurationSection("vote-data.rewards." + tier).getKeys(false)) {
-							items.add(plugin.getConfig().getInt("vote-data.rewards." + tier, 0), item);
-						}
-
-						int min = plugin.getConfig().getInt("vote-data.rewards." + tier + ".min-items", 1);
-						int max = plugin.getConfig().getInt("vote-data.rewards." + tier + ".max-items", 1);
-						int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
-
-						List<ItemStack> givenItems = new ArrayList<>();
-						for (int i = 0; i < amount; i++) {
-
-							String itemName = items.next();
-							int minAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".min-amount");
-							int maxAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".max-amount");
-
-							int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount+1);
-
-							ItemStack is = new ItemStack(plugin.getConfig().getItemStack("vote-data.rewards." + tier + "." + itemName + ".item"));
-							is.setAmount(rndAmount);
-
-							givenItems.add(is);
-
-						}
-
-					}
-
-				}
-
 			}
 		}
 
-		// If the player is offline, cache the VoteInfo to be resolved later.
-		if (!vi.uuidSet()) { uuidVotes.put(vi.user, vi); }
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-			public void run() { processVotes(); }
-		}, 100L, 200L);
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-			public void run() { fetchUuids(); }
-		}, 200L, 200L);
+		// If the player is offline, cache the VoteInfo to be resolved later and add the user to the waitlist
+		if (!vi.uuidSet()) {
+			uuidVotes.put(vi.user, vi);
+		}
 	}
 
 	private void processVotes() {
 		String pass = plugin.getConfig().getString("vote-data.password", null);
-		if (!urls.isEmpty() && !processVotes.isEmpty()) {
-			if (pass == null || pass.isEmpty()) {
-				plugin.getLogger().log(Level.WARNING, "The password hasn't been set! (CarbonWeb.yml: vote-data.password)");
-			}
-			for (URL url : urls) {
+		if (!processVotes.isEmpty()) {
+			for (VoteInfo vi : processVotes) {
+				Player p = Bukkit.getPlayer(vi.uuid());
+				if (p != null && p.isOnline()) {
+					for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
+						if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
+							RandomCollection<String> items = new RandomCollection<>();
+							for (String item : plugin.getConfig().getConfigurationSection("vote-data.rewards." + tier).getKeys(false)) {
+								items.add(plugin.getConfig().getInt("vote-data.rewards." + tier, 0), item);
+							}
 
-				try {
+							int min = plugin.getConfig().getInt("vote-data.rewards." + tier + ".min-items", 1);
+							int max = plugin.getConfig().getInt("vote-data.rewards." + tier + ".max-items", 1);
+							int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
 
-					// Setup the connection
-					URLConnection con = url.openConnection();
-					con.setDoOutput(true); // Triggers POST.
-					con.setRequestProperty("Accept-Charset", "UTF-8");
-					con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+							List<ItemStack> givenItems = new ArrayList<>();
+							for (int i = 0; i < amount; i++) {
+								String itemName = items.next();
+								int minAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".min-amount");
+								int maxAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".max-amount");
 
-					// Build the JSON array
-					JsonObject jsonObj = new JsonObject();
-					jsonObj.addProperty("timestamp", System.currentTimeMillis()/1000L);
-					jsonObj.addProperty("password", BCrypt.hashpw(pass, BCrypt.gensalt()));
-					JsonArray votesJson = new JsonArray();
-					for (VoteInfo vi : processVotes) { votesJson.add(vi.asJson()); }
-					jsonObj.add("votes", votesJson);
+								int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
 
-					// Build the payload string
-					String payload = String.format("data=%s", URLEncoder.encode(jsonObj.toString(), "UTF-8"));
-					plugin.getLogger().log(Level.FINE, "Notify URL " + url.toString() + " with payload: " + payload);
+								ItemStack is = new ItemStack(plugin.getConfig().getItemStack("vote-data.rewards." + tier + "." + itemName + ".item"));
+								is.setAmount(rndAmount);
 
-					// Send request
-					OutputStream output = con.getOutputStream();
-					output.write(payload.getBytes("UTF-8"));
-					output.close();
-
-					processVotes.clear();
-
-				} catch (Exception e) {
-					plugin.getLogger().log(Level.WARNING, "Encountered an error attempting to send vote data to notify-url: "
-							+ url.toString() + " -- Details:");
-					e.printStackTrace();
+								givenItems.add(is);
+							}
+						}
+					}
 				}
+			}
 
+			if (!urls.isEmpty()) {
+				if (pass == null || pass.isEmpty()) {
+					plugin.getLogger().log(Level.WARNING, "The password hasn't been set! (CarbonWeb.yml: vote-data.password)");
+				}
+				for (URL url : urls) {
+					try {
+						// Setup the connection
+						URLConnection con = url.openConnection();
+						con.setDoOutput(true); // Triggers POST.
+						con.setRequestProperty("Accept-Charset", "UTF-8");
+						con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+
+						// Build the JSON array
+						JsonObject jsonObj = new JsonObject();
+						jsonObj.addProperty("timestamp", System.currentTimeMillis()/1000L);
+						jsonObj.addProperty("password", BCrypt.hashpw(pass, BCrypt.gensalt()));
+						JsonArray votesJson = new JsonArray();
+						for (VoteInfo vi : processVotes) { votesJson.add(vi.asJson()); }
+						jsonObj.add("votes", votesJson);
+
+						// Build the payload string
+						String payload = String.format("data=%s", URLEncoder.encode(jsonObj.toString(), "UTF-8"));
+						plugin.getLogger().log(Level.FINE, "Notify URL " + url.toString() + " with payload: " + payload);
+
+						// Send request
+						OutputStream output = con.getOutputStream();
+						output.write(payload.getBytes("UTF-8"));
+						output.close();
+
+						processVotes.clear();
+
+					} catch (Exception e) {
+						plugin.getLogger().log(Level.WARNING, "Encountered an error attempting to send vote data to notify-url: "
+								+ url.toString() + " -- Details:");
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 	}
@@ -177,6 +176,15 @@ public class VoteListener implements Listener {
 					}
 				}
 			} catch (Exception ignore) {}
+
+			// Remove pending votes if they've failed to parse 3 times
+			List<String> removeVotes = new ArrayList<>();
+			for (String key : uuidVotes.keySet()) {
+				VoteInfo vi = uuidVotes.get(key);
+				if (vi.getParseAttempts() > 2) { removeVotes.add(key); }
+				else { vi.incParseAttempts(); }
+			}
+			for (String key : removeVotes) { uuidVotes.remove(key); }
 		}
 
 	}
