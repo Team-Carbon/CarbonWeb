@@ -3,6 +3,8 @@ vote-data:
   notify-urls: []
   password: ""
   rewards: {}
+  queued-rewards: {}
+  broadcast: "&6{PLAYER} &avoted and received &6{AMOUNT}x {ITEM-LOWERCASE}&a!"
 json-data:
   testing-mode: false
   notice-enabled: false

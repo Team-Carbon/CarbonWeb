@@ -57,6 +57,7 @@ public class CarbonWebReward implements CommandExecutor {
 		String tprop = args.length > 2 ? args[2].toLowerCase() : "";
 		String tval = args.length > 3 ? args[3].toLowerCase() : "";
 
+		// cwrw edititem tier item prop val
 		String iitem = args.length > 2 ? args[2].toLowerCase() : "";
 		String iprop = args.length > 3 ? args[3].toLowerCase() : "";
 		String ival = args.length > 4 ? args[4].toLowerCase() : "";
@@ -97,7 +98,7 @@ public class CarbonWebReward implements CommandExecutor {
 					sender.sendMessage(ChatColor.RED + tier + " tier already exists. To edit it, use /cwrw edittier");
 					return true;
 				} else {
-					plugin.getConfig().set(tierPath(tier), TIER);
+					plugin.getConfig().set(plugin.tierPath(tier), TIER);
 					plugin.saveConfig();
 					sender.sendMessage(ChatColor.AQUA + tier + " tier has been created");
 					return true;
@@ -136,7 +137,10 @@ public class CarbonWebReward implements CommandExecutor {
 				if (hand != null && hand.getType() != Material.AIR) {
 					hand = new ItemStack(hand);
 					hand.setAmount(1);
-					plugin.getConfig().set(itemPath(tier, item), hand);
+					plugin.getConfig().set(plugin.itemPath(tier, item) + ".item", hand);
+					plugin.getConfig().set(plugin.itemPath(tier, item) + ".weight", 1);
+					plugin.getConfig().set(plugin.itemPath(tier, item) + ".min-amount", 1);
+					plugin.getConfig().set(plugin.itemPath(tier, item) + ".max-amount", 1);
 					plugin.saveConfig();
 					sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + " to the currently held item");
 					return true;
@@ -159,7 +163,7 @@ public class CarbonWebReward implements CommandExecutor {
 					return true;
 				}
 
-				plugin.getConfig().set(tierPath(tier), null);
+				plugin.getConfig().set(plugin.tierPath(tier), null);
 				plugin.saveConfig();
 				sender.sendMessage(ChatColor.AQUA + tier + " tier removed from config.");
 				return true;
@@ -203,26 +207,6 @@ public class CarbonWebReward implements CommandExecutor {
 				}
 
 				switch (tprop) {
-					case "item":
-
-						if (!(sender instanceof Player)) {
-							sender.sendMessage(ChatColor.RED + "You must be in-game to do that!");
-							return true;
-						}
-
-						p = (Player) sender;
-						hand = p.getInventory().getItemInMainHand();
-						if (hand != null && hand.getType() != Material.AIR) {
-							hand = new ItemStack(hand);
-							hand.setAmount(1);
-							plugin.getConfig().set(itemPath(tier, item), hand);
-							plugin.saveConfig();
-							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + " to the currently held item");
-							return true;
-						} else {
-							sender.sendMessage(ChatColor.RED + "Must be holding the item to add to this tier");
-							return true;
-						}
 					case "min":
 					case "minitems":
 					case "itemsmin":
@@ -234,13 +218,13 @@ public class CarbonWebReward implements CommandExecutor {
 								sender.sendMessage(ChatColor.RED + "Min must be at least 1");
 								return true;
 							}
-							int max = plugin.getConfig().getInt(tierPath(tier) + ".max-items", 1);
+							int max = plugin.getConfig().getInt(plugin.tierPath(tier) + ".max-items", 1);
 							if (min > max) {
 								sender.sendMessage(ChatColor.RED + "Min must be less than max (max = " + max + "), "
 										+ "increase max, then you can set min again.");
 								return true;
 							}
-							plugin.getConfig().set(tierPath(tier) + ".min-items", min);
+							plugin.getConfig().set(plugin.tierPath(tier) + ".min-items", min);
 							plugin.saveConfig();
 							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".min-items to " + min);
 							return true;
@@ -260,13 +244,13 @@ public class CarbonWebReward implements CommandExecutor {
 								sender.sendMessage(ChatColor.RED + "Max must be at least 1");
 								return true;
 							}
-							int min = plugin.getConfig().getInt(tierPath(tier) + ".min-items", 1);
+							int min = plugin.getConfig().getInt(plugin.tierPath(tier) + ".min-items", 1);
 							if (max < min) {
 								sender.sendMessage(ChatColor.RED + "Max must be more than min (min = " + min + "), "
 										+ "decrease min, then you can set max again.");
 								return true;
 							}
-							plugin.getConfig().set(tierPath(tier) + ".max-items", max);
+							plugin.getConfig().set(plugin.tierPath(tier) + ".max-items", max);
 							plugin.saveConfig();
 							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".max-items to " + max);
 							return true;
@@ -307,6 +291,22 @@ public class CarbonWebReward implements CommandExecutor {
 				}
 
 				switch (iprop) {
+					case "weight":
+						try {
+							int weight = Integer.parseInt(ival);
+							if (weight < 1) {
+								sender.sendMessage(ChatColor.RED + "Weight must be at least 1");
+								return true;
+							}
+							plugin.getConfig().set(plugin.itemPath(tier, item) + ".weight", weight);
+							plugin.saveConfig();
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + ".weight to " + weight);
+							return true;
+						} catch (Exception e) {
+							sender.sendMessage(ChatColor.RED + "Min must be a whole number. (You said \"" + ival + "\"");
+							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edititem tier item prop [val]");
+							return true;
+						}
 					case "item":
 
 						if (!(sender instanceof Player)) {
@@ -319,7 +319,7 @@ public class CarbonWebReward implements CommandExecutor {
 						if (hand != null && hand.getType() != Material.AIR) {
 							hand = new ItemStack(hand);
 							hand.setAmount(1);
-							plugin.getConfig().set(itemPath(tier, item), hand);
+							plugin.getConfig().set(plugin.itemPath(tier, item) + ".item", hand);
 							plugin.saveConfig();
 							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + " to the currently held item");
 							return true;
@@ -338,13 +338,13 @@ public class CarbonWebReward implements CommandExecutor {
 								sender.sendMessage(ChatColor.RED + "Min must be at least 1");
 								return true;
 							}
-							int max = plugin.getConfig().getInt(itemPath(tier, item) + ".max-amount", 1);
+							int max = plugin.getConfig().getInt(plugin.itemPath(tier, item) + ".max-amount", 1);
 							if (min > max) {
 								sender.sendMessage(ChatColor.RED + "Min must be less than max (max = " + max + "), "
 										+ "increase max, then you can set min again.");
 								return true;
 							}
-							plugin.getConfig().set(itemPath(tier, item) + ".min-amount", min);
+							plugin.getConfig().set(plugin.itemPath(tier, item) + ".min-amount", min);
 							plugin.saveConfig();
 							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + ".min-amount to " + min);
 							return true;
@@ -359,23 +359,23 @@ public class CarbonWebReward implements CommandExecutor {
 					case "max-amount":
 					case "amount-max":
 						try {
-							int max = Integer.parseInt(tval);
+							int max = Integer.parseInt(ival);
 							if (max < 1) {
 								sender.sendMessage(ChatColor.RED + "Max must be at least 1");
 								return true;
 							}
-							int min = plugin.getConfig().getInt(tierPath(tier) + ".min-items", 1);
+							int min = plugin.getConfig().getInt(plugin.tierPath(tier) + ".min-items", 1);
 							if (max < min) {
 								sender.sendMessage(ChatColor.RED + "Max must be more than min (min = " + min + "), "
 										+ "decrease min, then you can set max again.");
 								return true;
 							}
-							plugin.getConfig().set(tierPath(tier) + ".max-items", max);
+							plugin.getConfig().set(plugin.itemPath(tier, item) + ".max-amount", max);
 							plugin.saveConfig();
-							sender.sendMessage(ChatColor.AQUA + "Set " + tier + ".max-items to " + max);
+							sender.sendMessage(ChatColor.AQUA + "Set " + tier + "." + item + ".max-amount to " + max);
 							return true;
 						} catch (Exception e) {
-							sender.sendMessage(ChatColor.RED + "Max must be a whole number. (You said \"" + tval + "\"");
+							sender.sendMessage(ChatColor.RED + "Max must be a whole number. (You said \"" + ival + "\"");
 							sender.sendMessage(ChatColor.RED + "Usage: /cwrw edititem tier item prop [val]");
 							return true;
 						}
@@ -387,9 +387,6 @@ public class CarbonWebReward implements CommandExecutor {
 		}
 	}
 
-	private String tierPath(String tier) { return "vote-data.rewards." + tier; }
-	private String itemPath(String tier, String item) { return "vote-data.rewards." + tier + "." + item; }
-
 	private String getTierList() {
 		Set<String> tiers = plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false);
 		Iterator<String> ti = tiers.iterator();
@@ -400,7 +397,7 @@ public class CarbonWebReward implements CommandExecutor {
 
 	private String getItemList(String tier) {
 		if (!tierExists(tier)) return "";
-		Set<String> items = plugin.getConfig().getConfigurationSection(tierPath(tier)+".items").getKeys(false);
+		Set<String> items = plugin.getConfig().getConfigurationSection(plugin.tierPath(tier)+".items").getKeys(false);
 		Iterator<String> ii = items.iterator();
 		String list = ii.hasNext() ? ii.next() : "";
 		while (ii.hasNext()) { list += ", " + ii.next(); }
@@ -410,13 +407,13 @@ public class CarbonWebReward implements CommandExecutor {
 	private boolean tierExists(String tier) {
 		if (tier == null || tier.isEmpty()) return false;
 		tier = tier.toLowerCase();
-		return plugin.getConfig().contains(tierPath(tier));
+		return plugin.getConfig().contains(plugin.tierPath(tier));
 	}
 
 	private boolean itemExists(String tier, String item) {
 		if (item == null || item.isEmpty()) return false;
 		item = item.toLowerCase();
-		return tierExists(tier) && plugin.getConfig().contains(itemPath(tier, item));
+		return tierExists(tier) && plugin.getConfig().contains(plugin.itemPath(tier, item));
 	}
 
 }

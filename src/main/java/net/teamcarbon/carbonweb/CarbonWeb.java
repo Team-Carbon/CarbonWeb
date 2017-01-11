@@ -7,14 +7,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.*;
 import net.teamcarbon.carbonweb.listeners.*;
-import net.teamcarbon.carbonweb.tasks.VoteRewardsTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -29,7 +27,7 @@ public class CarbonWeb extends JavaPlugin {
 
 	private Plugin ess;
 	private HikariDataSource hds;
-	private BukkitTask voteRewardsTask;
+	//private BukkitTask voteRewardsTask;
 	public Permission perm;
 
 	public String getDebugPath() { return "enable-debug-logging"; }
@@ -62,12 +60,12 @@ public class CarbonWeb extends JavaPlugin {
 			public void run() { dumpInfo(); }
 		}, 0L, 100L);
 
-		voteRewardsTask = new VoteRewardsTask(this).runTaskTimer(this, 15, 15);
+		//voteRewardsTask = new QueuedCmdsTask(this).runTaskTimer(this, 15, 15);
 
 	}
 
 	public void reload() {
-		voteRewardsTask.cancel();
+		//if (voteRewardsTask != null) voteRewardsTask.cancel();
 
 		reloadConfig();
 		String jdbcUrl = "jdbc:mysql://"
@@ -82,13 +80,14 @@ public class CarbonWeb extends JavaPlugin {
 		hc.addDataSourceProperty("cachePrepStmts", "true");
 		hc.addDataSourceProperty("prepStmtCacheSize", "250");
 		hc.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+		hc.addDataSourceProperty("connectionTimeout", "3000");
 		hc.setJdbcUrl(jdbcUrl);
 		hc.setUsername(user);
 		hc.setPassword(pass);
 		hc.validate();
 		hds = new HikariDataSource(hc);
 
-		voteRewardsTask = new VoteRewardsTask(this).runTaskTimer(this, 15, 15);
+		//voteRewardsTask = new QueuedCmdsTask(this).runTaskTimer(this, 15, 15);
 	}
 
 	public Connection getConn() {
@@ -101,6 +100,9 @@ public class CarbonWeb extends JavaPlugin {
 	}
 
 	public String f(String f, Object ... o) { return String.format(Locale.ENGLISH, f, o); }
+
+	public String tierPath(String tier) { return "vote-data.rewards." + tier; }
+	public String itemPath(String tier, String item) { return "vote-data.rewards." + tier + ".items." + item; }
 
 	public ResultSet execq(String q) {
 		try {

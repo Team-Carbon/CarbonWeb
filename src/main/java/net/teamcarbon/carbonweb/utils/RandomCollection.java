@@ -1,5 +1,7 @@
 package net.teamcarbon.carbonweb.utils;
 
+import org.bukkit.Bukkit;
+
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
@@ -18,13 +20,15 @@ public class RandomCollection<E> {
 	}
 
 	public void add(double weight, E result) {
-		if (weight <= 0) return;
+		if (weight <= 0) weight = 1;
 		total += weight;
 		map.put(total, result);
 	}
 
 	public E next() {
 		double value = random.nextDouble() * total;
+		if (map == null) { Bukkit.getLogger().warning("map == null"); }
+		if (map.ceilingEntry(value) == null) { Bukkit.getLogger().warning("entry == null"); }
 		return map.ceilingEntry(value).getValue();
 	}
 }

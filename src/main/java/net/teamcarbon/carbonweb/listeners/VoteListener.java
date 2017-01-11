@@ -10,6 +10,7 @@ import net.teamcarbon.carbonweb.utils.RandomCollection;
 import net.teamcarbon.carbonweb.utils.UUIDFetcher;
 import net.teamcarbon.carbonweb.utils.VoteInfo;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -33,7 +34,7 @@ public class VoteListener implements Listener {
 				URL notifyUrl = new URL(url);
 				urls.add(notifyUrl);
 			} catch (Exception e) {
-				plugin.getLogger().log(Level.WARNING, "Malformed URL in config (CarbonWeb.yml: vote-data.notify-urls): " + url);
+				plugin.getLogger().log(Level.WARNING, "Malformed URL in config (CarbonWeb/config.yml: vote-data.notify-urls): " + url);
 			}
 		}
 
@@ -79,39 +80,21 @@ public class VoteListener implements Listener {
 		if (!processVotes.isEmpty()) {
 			for (VoteInfo vi : processVotes) {
 				Player p = Bukkit.getPlayer(vi.uuid());
-				if (p != null && p.isOnline()) {
-					for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
-						if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
-							RandomCollection<String> items = new RandomCollection<>();
-							for (String item : plugin.getConfig().getConfigurationSection("vote-data.rewards." + tier).getKeys(false)) {
-								items.add(plugin.getConfig().getInt("vote-data.rewards." + tier, 0), item);
-							}
-
-							int min = plugin.getConfig().getInt("vote-data.rewards." + tier + ".min-items", 1);
-							int max = plugin.getConfig().getInt("vote-data.rewards." + tier + ".max-items", 1);
-							int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
-
-							List<ItemStack> givenItems = new ArrayList<>();
-							for (int i = 0; i < amount; i++) {
-								String itemName = items.next();
-								int minAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".min-amount");
-								int maxAmount = plugin.getConfig().getInt("vote-data.rewards." + tier + "." + itemName + ".max-amount");
-
-								int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
-
-								ItemStack is = new ItemStack(plugin.getConfig().getItemStack("vote-data.rewards." + tier + "." + itemName + ".item"));
-								is.setAmount(rndAmount);
-
-								givenItems.add(is);
-							}
+				VoteListener.rewardPlayer(plugin, p);
+				if (p != null && !p.isOnline()) {
+						List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
+						if (!queuedRewards.contains(p.getUniqueId().toString())) {
+							queuedRewards.add(p.getUniqueId().toString());
 						}
-					}
+						plugin.getConfig().set("vote-data.queued-rewards", queuedRewards);
+						plugin.saveConfig();
+						Bukkit.getLogger().info("Added player for deferred vote rewards: " + p.getName() + " (UUID: " + p.getUniqueId().toString() + ")");
 				}
 			}
 
 			if (!urls.isEmpty()) {
 				if (pass == null || pass.isEmpty()) {
-					plugin.getLogger().log(Level.WARNING, "The password hasn't been set! (CarbonWeb.yml: vote-data.password)");
+					plugin.getLogger().log(Level.WARNING, "The password hasn't been set! (CarbonWeb/config.yml: vote-data.password)");
 				}
 				for (URL url : urls) {
 					try {
@@ -187,6 +170,46 @@ public class VoteListener implements Listener {
 			for (String key : removeVotes) { uuidVotes.remove(key); }
 		}
 
+	}
+
+	public static void rewardPlayer(CarbonWeb plugin, Player p) {
+		if (p == null || !p.isOnline()) return;
+		for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
+			if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
+				RandomCollection<String> items = new RandomCollection<>();
+				for (String item : plugin.getConfig().getConfigurationSection(plugin.tierPath(tier) + ".items").getKeys(false)) {
+					items.add(plugin.getConfig().getInt(plugin.itemPath(tier, item) + ".weight", 0), item);
+				}
+
+				int min = plugin.getConfig().getInt(plugin.tierPath(tier) + ".min-items", 1);
+				int max = plugin.getConfig().getInt(plugin.tierPath(tier) + ".max-items", 1);
+				int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
+
+				List<ItemStack> givenItems = new ArrayList<>();
+				for (int i = 0; i < amount; i++) {
+					String itemName = items.next();
+					int minAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".min-amount");
+					int maxAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".max-amount");
+
+					int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
+
+					ItemStack is = new ItemStack(plugin.getConfig().getItemStack(plugin.itemPath(tier, itemName) + ".item"));
+					is.setAmount(rndAmount);
+
+					givenItems.add(is);
+				}
+
+				HashMap<Integer, ItemStack> excess = p.getInventory().addItem(givenItems.toArray(new ItemStack[] {}));
+				if (!excess.isEmpty()) {
+					p.sendMessage(ChatColor.RED + "Not enough room in your inventory! Dropping " + excess.size() + " items.");
+					for (ItemStack is : excess.values()) {
+						p.getWorld().dropItem(p.getLocation(), is);
+					}
+				}
+
+				givenItems.clear();
+			}
+		}
 	}
 
 }

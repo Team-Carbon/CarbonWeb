@@ -11,16 +11,16 @@ import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VoteRewardsTask extends BukkitRunnable {
+public class QueuedCmdsTask extends BukkitRunnable {
 
 	private final CarbonWeb plugin;
 
-	public VoteRewardsTask(CarbonWeb p) {
+	public QueuedCmdsTask(CarbonWeb p) {
 		plugin = p;
 	}
 
 	public void run() {
-		Bukkit.getLogger().info("Executing VoteRewardTask");
+		Bukkit.getLogger().info("Executing QueuedCmdsTask");
 		List<RewardCommand> cmds = new ArrayList<>();
 		ResultSet res = plugin.execq("SELECT * FROM commands WHERE executed=0");
 		if (res != null) {
@@ -38,7 +38,7 @@ public class VoteRewardsTask extends BukkitRunnable {
 					Bukkit.getLogger().info("Cached command: " + rc.getCommand());
 				}
 			} catch (Exception e) {
-				plugin.getLogger().warning("Encountered an error iterating over result set rows (vote reward task):");
+				plugin.getLogger().warning("Encountered an error iterating over result set rows (QueuedCmdsTask):");
 				e.printStackTrace();
 			}
 			String successIds = "";
@@ -61,8 +61,7 @@ public class VoteRewardsTask extends BukkitRunnable {
 					}
 				}
 			}
-			successIds = "(" + successIds + ")";
-			String query = "UPDATE commands SET executed=true WHERE cmd_id in " + successIds;
+			String query = "UPDATE commands SET executed=true WHERE cmd_id in (" + successIds + ")";
 			plugin.execu(query);
 			cmds.clear();
 		} else {
