@@ -31,4 +31,9 @@ public class RandomCollection<E> {
 		if (map.ceilingEntry(value) == null) { Bukkit.getLogger().warning("entry == null"); }
 		return map.ceilingEntry(value).getValue();
 	}
+
+	public void clear() {
+		map.clear();
+		total = 0;
+	}
 }

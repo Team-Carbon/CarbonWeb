@@ -16,11 +16,15 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.*;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
@@ -58,6 +62,7 @@ public class VoteListener implements Listener {
 	@EventHandler
 	public void onVote(VotifierEvent e) {
 		Vote v = e.getVote();
+		Bukkit.getLogger().info("Received vote: " + v.getUsername() + " @ " + v.getServiceName());
 		VoteInfo vi = new VoteInfo(v);
 		plugin.getLogger().log(Level.FINE, v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
 
@@ -79,9 +84,10 @@ public class VoteListener implements Listener {
 		String pass = plugin.getConfig().getString("vote-data.password", null);
 		if (!processVotes.isEmpty()) {
 			for (VoteInfo vi : processVotes) {
-				Player p = Bukkit.getPlayer(vi.uuid());
-				VoteListener.rewardPlayer(plugin, p);
-				if (p != null && !p.isOnline()) {
+				if (plugin.getConfig().getStringList("vote-data.allowed-services").contains(vi.serv)) {
+					Player p = Bukkit.getPlayer(vi.uuid());
+					VoteListener.rewardPlayer(plugin, p);
+					if (p != null && !p.isOnline()) {
 						List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
 						if (!queuedRewards.contains(p.getUniqueId().toString())) {
 							queuedRewards.add(p.getUniqueId().toString());
@@ -89,6 +95,10 @@ public class VoteListener implements Listener {
 						plugin.getConfig().set("vote-data.queued-rewards", queuedRewards);
 						plugin.saveConfig();
 						Bukkit.getLogger().info("Added player for deferred vote rewards: " + p.getName() + " (UUID: " + p.getUniqueId().toString() + ")");
+					}
+				} else {
+					Bukkit.getLogger().warning(vi.user + " attempted to vote from an invalid service: " + vi.serv);
+					return;
 				}
 			}
 
@@ -174,6 +184,9 @@ public class VoteListener implements Listener {
 
 	public static void rewardPlayer(CarbonWeb plugin, Player p) {
 		if (p == null || !p.isOnline()) return;
+		String rarestItem = "";
+		int rarestWeight = Integer.MAX_VALUE;
+		boolean rewarded = false, rewardedMultiple = false;
 		for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
 			if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
 				RandomCollection<String> items = new RandomCollection<>();
@@ -188,8 +201,8 @@ public class VoteListener implements Listener {
 				List<ItemStack> givenItems = new ArrayList<>();
 				for (int i = 0; i < amount; i++) {
 					String itemName = items.next();
-					int minAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".min-amount");
-					int maxAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".max-amount");
+					int minAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".min-amount", 1);
+					int maxAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".max-amount", 1);
 
 					int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
 
@@ -197,6 +210,12 @@ public class VoteListener implements Listener {
 					is.setAmount(rndAmount);
 
 					givenItems.add(is);
+
+					if (plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".weight", 1) < rarestWeight) {
+						rarestItem = is.getType().toString().toLowerCase().replace("_", " ");
+					}
+					if (!givenItems.isEmpty()) rewarded = true;
+					if (givenItems.size() > 1) rewardedMultiple = true;
 				}
 
 				HashMap<Integer, ItemStack> excess = p.getInventory().addItem(givenItems.toArray(new ItemStack[] {}));
@@ -207,7 +226,19 @@ public class VoteListener implements Listener {
 					}
 				}
 
+				if (rewarded) {
+					String msg = plugin.getConfig().getString("vote-data.broadcast", "&6{PLAYER} &avoted and received {REWARD}&a!");
+					msg = msg.replace("{PLAYER}", p.getName());
+					msg = msg.replace("{REWARD}", rarestItem + (rewardedMultiple ? " and more" : ""));
+					msg = ChatColor.translateAlternateColorCodes('&', msg);
+					Bukkit.broadcastMessage(msg);
+				}
+
+				rarestItem = "";
+				rarestWeight = Integer.MAX_VALUE;
+				rewarded = false;
 				givenItems.clear();
+				items.clear();
 			}
 		}
 	}
