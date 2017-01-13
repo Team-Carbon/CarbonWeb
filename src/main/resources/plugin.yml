@@ -25,7 +25,7 @@ commands:
     aliases: [cwlink, weblink, cwl, link]
   carbonwebreward:
     description: Manage vote rewards
-    usage: /reward [addtier|additem|remtier|remitem|edittier|edititem]
+    usage: /reward [addtier|additem|remtier|remitem|edittier|edititem|givereward]
     aliases: [cwreward, webreward, cwrw, reward]
 permission:
   carbonweb.reload:

@@ -1,6 +1,8 @@
 package net.teamcarbon.carbonweb.commands;
 
 import net.teamcarbon.carbonweb.CarbonWeb;
+import net.teamcarbon.carbonweb.listeners.VoteListener;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -63,6 +65,27 @@ public class CarbonWebReward implements CommandExecutor {
 		String ival = args.length > 4 ? args[4].toLowerCase() : "";
 
 		switch (act) {
+			case "givereward": // cwrw gr player
+			case "gr":
+				if (args.length > 1) {
+					Player p = plugin.getServer().getPlayer(args[1]);
+					if (p != null) {
+						if (p.isOnline()) {
+							VoteListener.rewardPlayer(plugin, p);
+							sender.sendMessage(ChatColor.AQUA + "Rewarded " + p.getName() + " with their vote reward tier");
+							return true;
+						} else {
+							sender.sendMessage(ChatColor.RED + "That player isn't online right now!");
+							return true;
+						}
+					} else {
+						sender.sendMessage(ChatColor.RED + "That player couldn't be found!");
+						return true;
+					}
+				} else {
+					sender.sendMessage(ChatColor.RED + "Usage: /cwrw givereward player");
+					return true;
+				}
 			case "listtiers":
 			case "lt":
 				sender.sendMessage(ChatColor.AQUA + "Available tiers:");

@@ -62,9 +62,14 @@ public class VoteListener implements Listener {
 	@EventHandler
 	public void onVote(VotifierEvent e) {
 		Vote v = e.getVote();
-		Bukkit.getLogger().info("Received vote: " + v.getUsername() + " @ " + v.getServiceName());
+
+		if (!plugin.getConfig().getStringList("vote-data.allowed-services").contains(v.getServiceName())) {
+			Bukkit.getLogger().warning(v.getUsername() + " attempted to vote from an invalid service: " + v.getServiceName());
+			return;
+		}
+
 		VoteInfo vi = new VoteInfo(v);
-		plugin.getLogger().log(Level.FINE, v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
+		Bukkit.getLogger().info(v.getUsername() + "(" + v.getAddress() + ") cast a vote from " + v.getServiceName());
 
 		// Check if the voting user is online, fetch their UUID locally, then add to the process queue.
 		for (Player p : plugin.getServer().getOnlinePlayers()) {
@@ -84,21 +89,16 @@ public class VoteListener implements Listener {
 		String pass = plugin.getConfig().getString("vote-data.password", null);
 		if (!processVotes.isEmpty()) {
 			for (VoteInfo vi : processVotes) {
-				if (plugin.getConfig().getStringList("vote-data.allowed-services").contains(vi.serv)) {
-					Player p = Bukkit.getPlayer(vi.uuid());
-					VoteListener.rewardPlayer(plugin, p);
-					if (p != null && !p.isOnline()) {
-						List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
-						if (!queuedRewards.contains(p.getUniqueId().toString())) {
-							queuedRewards.add(p.getUniqueId().toString());
-						}
-						plugin.getConfig().set("vote-data.queued-rewards", queuedRewards);
-						plugin.saveConfig();
-						Bukkit.getLogger().info("Added player for deferred vote rewards: " + p.getName() + " (UUID: " + p.getUniqueId().toString() + ")");
+				Player p = Bukkit.getPlayer(vi.uuid());
+				VoteListener.rewardPlayer(plugin, p);
+				if (p != null && !p.isOnline()) {
+					List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
+					if (!queuedRewards.contains(p.getUniqueId().toString())) {
+						queuedRewards.add(p.getUniqueId().toString());
 					}
-				} else {
-					Bukkit.getLogger().warning(vi.user + " attempted to vote from an invalid service: " + vi.serv);
-					return;
+					plugin.getConfig().set("vote-data.queued-rewards", queuedRewards);
+					plugin.saveConfig();
+					Bukkit.getLogger().info("Added player for deferred vote rewards: " + p.getName() + " (UUID: " + p.getUniqueId().toString() + ")");
 				}
 			}
 
@@ -177,7 +177,11 @@ public class VoteListener implements Listener {
 				if (vi.getParseAttempts() > 2) { removeVotes.add(key); }
 				else { vi.incParseAttempts(); }
 			}
-			for (String key : removeVotes) { uuidVotes.remove(key); }
+			for (String key : removeVotes) {
+				VoteInfo vi = uuidVotes.get(key);
+				Bukkit.getLogger().warning("Failed to resolve UUID for username: " + vi.user + " (IP: " + vi.addr + ", Service: " + vi.serv + ")");
+				uuidVotes.remove(key);
+			}
 		}
 
 	}
