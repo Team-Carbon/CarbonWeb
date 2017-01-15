@@ -211,6 +211,10 @@ public class CarbonWebReward implements CommandExecutor {
 					return true;
 				}
 
+				plugin.getConfig().set(plugin.itemPath(tier, item), null);
+				plugin.saveConfig();
+				sender.sendMessage(ChatColor.AQUA + "Removed item: " + item + " from " + tier + " tier rewards.");
+
 				return true;
 
 			case "edittier":
