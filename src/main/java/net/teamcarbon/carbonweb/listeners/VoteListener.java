@@ -90,7 +90,19 @@ public class VoteListener implements Listener {
 		if (!processVotes.isEmpty()) {
 			for (VoteInfo vi : processVotes) {
 				Player p = Bukkit.getPlayer(vi.uuid());
-				VoteListener.rewardPlayer(plugin, p);
+				if (plugin.getConfig().getBoolean("vote-data.reward-same-ips", false)) {
+					for (Player p2 : Bukkit.getOnlinePlayers()) {
+						if (!p.getName().equalsIgnoreCase(p2.getName())) {
+							String pa1 = p.getAddress().getAddress().getHostAddress();
+							String pa2 = p.getAddress().getAddress().getHostAddress();
+							if (pa1.equals(pa2)) {
+								VoteListener.rewardPlayer(plugin, p, false, false);
+								p2.sendMessage(ChatColor.AQUA + p.getName() + " voted. You've been rewarded because you share an IP address!" + ChatColor.GRAY + " (This will only work if you're online!)");
+							}
+						}
+					}
+				}
+				VoteListener.rewardPlayer(plugin, p, true, false);
 				if (p != null && !p.isOnline()) {
 					List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
 					if (!queuedRewards.contains(p.getUniqueId().toString())) {
@@ -186,7 +198,7 @@ public class VoteListener implements Listener {
 
 	}
 
-	public static void rewardPlayer(CarbonWeb plugin, Player p) {
+	public static void rewardPlayer(CarbonWeb plugin, Player p, boolean broadcast, boolean message) {
 		if (p == null || !p.isOnline()) return;
 		String rarestItem = "";
 		int rarestWeight = Integer.MAX_VALUE;
@@ -235,7 +247,7 @@ public class VoteListener implements Listener {
 					msg = msg.replace("{PLAYER}", p.getName());
 					msg = msg.replace("{REWARD}", rarestItem + (rewardedMultiple ? " and more" : ""));
 					msg = ChatColor.translateAlternateColorCodes('&', msg);
-					Bukkit.broadcastMessage(msg);
+					if (broadcast) { Bukkit.broadcastMessage(msg); } else if (message) { p.sendMessage(msg); }
 				}
 
 				rarestItem = "";

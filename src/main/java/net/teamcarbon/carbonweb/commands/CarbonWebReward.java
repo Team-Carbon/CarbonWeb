@@ -2,7 +2,6 @@ package net.teamcarbon.carbonweb.commands;
 
 import net.teamcarbon.carbonweb.CarbonWeb;
 import net.teamcarbon.carbonweb.listeners.VoteListener;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -14,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 public class CarbonWebReward implements CommandExecutor {
 
@@ -25,22 +23,8 @@ public class CarbonWebReward implements CommandExecutor {
 	static {
 		TIER.set("min-items", 2);
 		TIER.set("max-items", 3);
-		TIER.set("items", new MemoryConfiguration());
-		//TIER.set("", null);
+		//TIER.set("items", new MemoryConfiguration());
 	}
-
-	/*
-
-	reward-tier:
-	  min-items: 2
-	  max-items: 3
-	  items:
-	    reward-item:
-	      min-amount: 3
-	      max-amount: 5
-	      item: (serialized item)
-
-	 */
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
@@ -71,7 +55,7 @@ public class CarbonWebReward implements CommandExecutor {
 					Player p = plugin.getServer().getPlayer(args[1]);
 					if (p != null) {
 						if (p.isOnline()) {
-							VoteListener.rewardPlayer(plugin, p);
+							VoteListener.rewardPlayer(plugin, p, false, true);
 							sender.sendMessage(ChatColor.AQUA + "Rewarded " + p.getName() + " with their vote reward tier");
 							return true;
 						} else {

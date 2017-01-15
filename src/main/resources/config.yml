@@ -1,10 +1,11 @@
 enable-debug-messages: true
 vote-data:
+  reward-same-ips: false
   notify-urls: []
   password: ""
   rewards: {}
   queued-rewards: {}
-  broadcast: "&6{PLAYER} &avoted and received {REWARD}&a!"
+  broadcast: "&6{PLAYER} &avoted and received &6{REWARD}&a!"
   allowed-services:
   - "planet-minecraft"
 json-data:
