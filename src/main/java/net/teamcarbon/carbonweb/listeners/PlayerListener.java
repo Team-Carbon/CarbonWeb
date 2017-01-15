@@ -23,7 +23,7 @@ public class PlayerListener implements Listener {
 		String id = e.getPlayer().getUniqueId().toString();
 		List<String> queued = plugin.getConfig().getStringList("vote-data.queued-rewards");
 		if (queued.contains(id)) {
-			VoteListener.rewardPlayer(plugin, e.getPlayer());
+			VoteListener.rewardPlayer(plugin, e.getPlayer(), true, false);
 			queued.remove(id);
 		}
 		plugin.getConfig().set("vote-data.queued-rewards", queued);
