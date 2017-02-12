@@ -5,6 +5,11 @@ version: ${version}
 main: net.teamcarbon.carbonweb.CarbonWeb
 depends: [Votifier]
 commands:
+  carbonwebtest:
+    description: A debugging command to test various things
+    usage: /cwtest [vote|count]
+    aliases: [cwtest, webtest, cwt]
+    permission: carbonweb.debug
   carbonwebreload:
     description: Reloads config values
     usage: /cwreload

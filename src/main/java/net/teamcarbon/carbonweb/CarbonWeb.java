@@ -221,6 +221,26 @@ public class CarbonWeb extends JavaPlugin {
 		}
 	}
 
+	public void testCount(Player p, int count) {
+		String path = "vote-counts." + p.getUniqueId().toString();
+
+		for (String key : getConfig().getConfigurationSection("vote-data.vote-promotions").getKeys(false)) {
+			String keyPath = "vote-data.vote-promotions." + key + ".";
+			String keyPerm = "vote-rewards.promotion." + key;
+			if (!perm.has(p, keyPerm)) return;
+			int reqVotes = getConfig().getInt(keyPath + "votes", 0);
+			if (count >= reqVotes) {
+				String rank = getConfig().getString(keyPath + "rank", "default");
+				for (String remRank : getConfig().getStringList(keyPath + "remove-ranks")) {
+					perm.playerRemoveGroup(null, p, remRank);
+				}
+				perm.playerAddGroup(null, p, rank);
+				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString(keyPath + "message", "&bPromoted to &6" + rank + "&b!")));
+				getLogger().info(p.getName() + " voted " + count + " times, promoted to " + rank);
+			}
+		}
+	}
+
 	public int getVotes(Player p) {
 		String path = "vote-counts." + p.getUniqueId().toString();
 		return voteData.getInt(path, 0);
