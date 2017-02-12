@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Set;
 
 public class CarbonWebVote implements CommandExecutor {
 
@@ -21,17 +22,27 @@ public class CarbonWebVote implements CommandExecutor {
 			return true;
 		}
 
-		List<String> sites = plugin.getConfig().getStringList("vote-data.vote-sites");
+		sender.sendMessage(ChatColor.GRAY + "+====================+");
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("vote-data.vote-description", "")));
+
+		Set<String> sites = plugin.getConfig().getConfigurationSection("vote-data.vote-sites").getKeys(false);
 		if (sites != null && !sites.isEmpty()) {
 			sender.sendMessage(ChatColor.AQUA + "Current vote sites:");
-			for(String site : sites) { sender.sendMessage(ChatColor.GOLD + site); }
+			for(String site : sites) {
+				String val = plugin.getConfig().getString("vote-data.vote-sites." + site, "");
+				sender.sendMessage(ChatColor.GRAY + site + ": " + ChatColor.GOLD + val);
+			}
 		}
+
+		sender.sendMessage(ChatColor.GRAY + "+--------------------+");
 
 		if (sender instanceof Player) {
 			Player p = (Player) sender;
 			int votes = plugin.getVotes(p);
 			sender.sendMessage(ChatColor.AQUA + "You have voted " + ChatColor.GREEN + votes + ChatColor.AQUA + " times!");
 		}
+
+		sender.sendMessage(ChatColor.GRAY + "+====================+");
 
 		return true;
 	}
