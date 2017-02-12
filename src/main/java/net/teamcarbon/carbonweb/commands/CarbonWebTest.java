@@ -1,6 +1,7 @@
 package net.teamcarbon.carbonweb.commands;
 
 import net.teamcarbon.carbonweb.CarbonWeb;
+import net.teamcarbon.carbonweb.listeners.VoteListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -36,7 +37,7 @@ public class CarbonWebTest implements CommandExecutor {
 				if (args.length > 1) { target = Bukkit.getPlayer(args[1]); }
 
 				if (target != null && target.isOnline()) {
-					plugin.addVote(target);
+					VoteListener.rewardPlayer(plugin, target, false, true);
 					sender.sendMessage(ChatColor.AQUA + "Executed vote");
 				} else {
 					sender.sendMessage(ChatColor.RED + "Player not found (must be online)");
