@@ -21,7 +21,7 @@ public class CarbonWebTest implements CommandExecutor {
 			return true;
 		}
 
-		if (args.length > 0) { return false; }
+		if (args.length < 0) { return false; }
 
 		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "Must be in game to do that!");

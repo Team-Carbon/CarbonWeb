@@ -216,20 +216,37 @@ public class VoteListener implements Listener {
 				int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
 
 				List<ItemStack> givenItems = new ArrayList<>();
+				double currencyGiven = plugin.getConfig().getDouble("vote-data.base-currency-given", 0);
 				for (int i = 0; i < amount; i++) {
 					String itemName = items.next();
-					int minAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".min-amount", 1);
-					int maxAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".max-amount", 1);
 
-					int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
+					if (itemName.equalsIgnoreCase("currency")) {
 
-					ItemStack is = new ItemStack(plugin.getConfig().getItemStack(plugin.itemPath(tier, itemName) + ".item"));
-					is.setAmount(rndAmount);
+						double minAmount = plugin.getConfig().getDouble(plugin.itemPath(tier, itemName) + ".min-amount", 1);
+						double maxAmount = plugin.getConfig().getDouble(plugin.itemPath(tier, itemName) + ".max-amount", 1);
+						double rndAmount = ThreadLocalRandom.current().nextDouble(minAmount, maxAmount);
 
-					givenItems.add(is);
+						currencyGiven += rndAmount;
 
-					if (plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".weight", 1) < rarestWeight) {
-						rarestItem = is.getType().toString().toLowerCase().replace("_", " ");
+						if (plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".weight", 1) < rarestWeight) {
+							rarestItem = plugin.getConfig().getString("vote-data.currency-name", "currency");
+						}
+
+					} else {
+
+						int minAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".min-amount", 1);
+						int maxAmount = plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".max-amount", 1);
+						int rndAmount = ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1);
+
+						ItemStack is = new ItemStack(plugin.getConfig().getItemStack(plugin.itemPath(tier, itemName) + ".item"));
+						is.setAmount(rndAmount);
+
+						givenItems.add(is);
+
+						if (plugin.getConfig().getInt(plugin.itemPath(tier, itemName) + ".weight", 1) < rarestWeight) {
+							rarestItem = is.getType().toString().toLowerCase().replace("_", " ");
+						}
+
 					}
 					if (!givenItems.isEmpty()) rewarded = true;
 					if (givenItems.size() > 1) rewardedMultiple = true;
@@ -242,6 +259,8 @@ public class VoteListener implements Listener {
 						p.getWorld().dropItem(p.getLocation(), is);
 					}
 				}
+
+				if (currencyGiven > 0) { plugin.econ.depositPlayer(p, currencyGiven); }
 
 				if (rewarded) {
 					String msg = plugin.getConfig().getString("vote-data.broadcast", "&6{PLAYER} &avoted and received {REWARD}&a!");

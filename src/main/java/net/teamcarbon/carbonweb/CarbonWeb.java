@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonWriter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import net.md_5.bungee.api.ChatColor;
+import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.*;
 import net.teamcarbon.carbonweb.listeners.*;
@@ -35,13 +36,14 @@ public class CarbonWeb extends JavaPlugin {
 	private FileConfiguration voteData = YamlConfiguration.loadConfiguration(voteDataFile);
 	//private BukkitTask voteRewardsTask;
 	public Permission perm;
+	public Economy econ;
 
 	public String getDebugPath() { return "enable-debug-logging"; }
 	public void disablePlugin() {}
 
 	public void onEnable() {
 		PluginManager pm = Bukkit.getPluginManager();
-		if (!setupPerms()) {
+		if (!setupVault()) {
 			getLogger().log(Level.SEVERE, "Failed to find Vault! Disabling " + getDescription().getName());
 			pm.disablePlugin(this);
 			return;
@@ -247,12 +249,18 @@ public class CarbonWeb extends JavaPlugin {
 		return voteData.getInt(path, 0);
 	}
 
-	private boolean setupPerms() {
+	private boolean setupVault() {
+
+		// Permissions
 		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
-		if (permissionProvider != null) {
-			perm = permissionProvider.getProvider();
-		}
-		return (perm != null);
+		if (permissionProvider != null) { perm = permissionProvider.getProvider(); }
+
+		// Economy
+		RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+		if (economyProvider != null) { econ = economyProvider.getProvider(); }
+
+		return (perm != null && econ != null);
+
 	}
 
 }

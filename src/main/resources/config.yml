@@ -3,6 +3,8 @@ vote-data:
   reward-same-ips: false
   notify-urls: []
   password: ""
+  currency-name: "currency"
+  base-currency-given: 10.0
   rewards: {}
   queued-rewards: {}
   broadcast: "&6{PLAYER} &avoted and received &6{REWARD}&a!"
