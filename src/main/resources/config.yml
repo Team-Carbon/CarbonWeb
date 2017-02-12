@@ -5,6 +5,7 @@ vote-data:
   password: ""
   currency-name: "currency"
   base-currency-given: 10.0
+  whole-currency-only: true
   rewards: {}
   queued-rewards: {}
   broadcast: "&6{PLAYER} &avoted and received &6{REWARD}&a!"

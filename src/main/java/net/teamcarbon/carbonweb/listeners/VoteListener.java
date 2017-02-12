@@ -260,7 +260,12 @@ public class VoteListener implements Listener {
 					}
 				}
 
-				if (currencyGiven > 0) { plugin.econ.depositPlayer(p, currencyGiven); }
+				if (currencyGiven > 0) {
+					if (plugin.getConfig().getBoolean("vote-data.whole-currency-only", true)) {
+						currencyGiven = Math.round(currencyGiven);
+					}
+					plugin.econ.depositPlayer(p, currencyGiven);
+				}
 
 				if (rewarded) {
 					String msg = plugin.getConfig().getString("vote-data.broadcast", "&6{PLAYER} &avoted and received {REWARD}&a!");
