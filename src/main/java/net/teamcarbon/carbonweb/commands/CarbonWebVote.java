@@ -7,7 +7,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.List;
 import java.util.Set;
 
 public class CarbonWebVote implements CommandExecutor {
@@ -27,14 +26,13 @@ public class CarbonWebVote implements CommandExecutor {
 
 		Set<String> sites = plugin.getConfig().getConfigurationSection("vote-data.vote-sites").getKeys(false);
 		if (sites != null && !sites.isEmpty()) {
-			sender.sendMessage(ChatColor.AQUA + "Current vote sites:");
 			for(String site : sites) {
 				String val = plugin.getConfig().getString("vote-data.vote-sites." + site, "");
 				sender.sendMessage(ChatColor.GRAY + site + ": " + ChatColor.GOLD + val);
 			}
+			sender.sendMessage(ChatColor.GRAY + "+--------------------+");
 		}
 
-		sender.sendMessage(ChatColor.GRAY + "+--------------------+");
 
 		if (sender instanceof Player) {
 			Player p = (Player) sender;
