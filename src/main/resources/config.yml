@@ -6,8 +6,23 @@ vote-data:
   rewards: {}
   queued-rewards: {}
   broadcast: "&6{PLAYER} &avoted and received &6{REWARD}&a!"
-  allowed-services:
-  - "planet-minecraft"
+  allowed-services: []
+  vote-sites: []
+  vote-promotions-world: "world"
+  vote-promotions:
+    neon-rank:
+      votes: 6
+      rank: "Neon"
+      remove-ranks:
+      - "Initiate"
+      message: "&bYou've voted enough for a promotion to &6Neon&b, congrats!"
+    steel-rank:
+      votes: 14
+      rank: "Steel"
+      remove-ranks:
+      - "Initiate"
+      - "Neon"
+      message: "&bYou've voted enough for a promotion to &7Steel&b, congrats!"
 json-data:
   testing-mode: false
   notice-enabled: false

@@ -6,7 +6,7 @@
 
     <groupId>net.teamcarbon</groupId>
     <artifactId>CarbonWeb</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <repositories>
         <repository>
@@ -25,10 +25,6 @@
         <repository>
             <id>ess-repo</id>
             <url>http://repo.ess3.net/content/groups/essentials</url>
-        </repository>
-        <repository>
-            <id>votifier-repo</id>
-            <url>http://repo.onarandombox.com/content/groups/public/</url>
         </repository>
     </repositories>
     <dependencies>
@@ -67,7 +63,6 @@
             <artifactId>Votifier</artifactId>
             <version>1.9</version>
             <scope>system</scope>
-            <optional>true</optional>
             <systemPath>${project.basedir}/lib/Votifier.jar</systemPath>
         </dependency>
     </dependencies>

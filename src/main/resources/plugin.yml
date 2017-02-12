@@ -18,7 +18,7 @@ commands:
   carbonwebvote:
     description: Vote command
     usage: /vote
-    aliases: [cwvote, webvote, cwv, votes]
+    aliases: [cwvote, webvote, cwv, votes, vote]
   carbonweblink:
     description: Link your minecraft account to the website
     usage: /link
@@ -34,3 +34,6 @@ permission:
   carbonweb.notice:
     description: Allows setting and toggling the JSON notice
     default: op
+  carbonweb.vote:
+    description: Use the vote command to list sites and see vote count
+    default: true

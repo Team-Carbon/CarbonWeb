@@ -4,10 +4,13 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import net.md_5.bungee.api.ChatColor;
 import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.*;
 import net.teamcarbon.carbonweb.listeners.*;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -16,6 +19,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,6 +31,8 @@ public class CarbonWeb extends JavaPlugin {
 
 	private Plugin ess;
 	private HikariDataSource hds;
+	private File voteDataFile = new File(getDataFolder(), "vote-data.yml");
+	private FileConfiguration voteData = YamlConfiguration.loadConfiguration(voteDataFile);
 	//private BukkitTask voteRewardsTask;
 	public Permission perm;
 
@@ -47,7 +53,7 @@ public class CarbonWeb extends JavaPlugin {
 		Bukkit.getPluginCommand("CarbonWebNotice").setExecutor(new CarbonWebNotice(this));
 		Bukkit.getPluginCommand("CarbonWebLink").setExecutor(new CarbonWebLink(this));
 		Bukkit.getPluginCommand("CarbonWebReward").setExecutor(new CarbonWebReward(this));
-		Bukkit.getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote());
+		Bukkit.getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote(this));
 
 		// Find Essentials
 		if (pm.isPluginEnabled("Essentials")) { ess = pm.getPlugin("Essentials"); }
@@ -190,6 +196,34 @@ public class CarbonWeb extends JavaPlugin {
 			getLogger().log(Level.WARNING, "Failed to write data.json! Details: ");
 			e.printStackTrace();
 		}
+	}
+
+	public void addVote(Player p) {
+		String path = "vote-counts." + p.getUniqueId().toString();
+		int vc = voteData.getInt(path, 0) + 1;
+		voteData.set(path, vc);
+		try { voteData.save(voteDataFile); } catch (IOException e) { e.printStackTrace(); }
+
+		for (String key : getConfig().getConfigurationSection("vote-data.vote-promotions").getKeys(false)) {
+			String keyPath = "vote-data.vote-promotions." + key + ".";
+			String keyPerm = "vote-rewards.promotion." + key;
+			if (!perm.has(p, keyPerm)) return;
+			int reqVotes = getConfig().getInt(keyPath + "votes", 0);
+			if (vc >= reqVotes) {
+				String rank = getConfig().getString(keyPath + "rank", "default");
+				for (String remRank : getConfig().getStringList(keyPath + "remove-ranks")) {
+					perm.playerRemoveGroup(null, p, remRank);
+				}
+				perm.playerAddGroup(null, p, rank);
+				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString(keyPath + "message", "&bPromoted to &6" + rank + "&b!")));
+				getLogger().info(p.getName() + " voted " + vc + " times, promoted to " + rank);
+			}
+		}
+	}
+
+	public int getVotes(Player p) {
+		String path = "vote-counts." + p.getUniqueId().toString();
+		return voteData.getInt(path, 0);
 	}
 
 	private boolean setupPerms() {
