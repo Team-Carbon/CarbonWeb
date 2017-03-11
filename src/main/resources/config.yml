@@ -49,5 +49,9 @@ auth-levels:
   initiate: 254
 discord:
   bot-token: ""
+  cleverbot-api-key: ""
+  use-cleverbot: true
   rank-syncing: false
+  console-id: ""
   ranks:
+    server-rank: "discord-rank"

@@ -7,13 +7,18 @@ import com.zaxxer.hikari.HikariDataSource;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.md_5.bungee.api.ChatColor;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import net.teamcarbon.carbonweb.commands.*;
 import net.teamcarbon.carbonweb.listeners.*;
+import net.teamcarbon.carbonweb.tasks.DiscordRankSyncTask;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -21,6 +26,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
@@ -30,6 +36,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.logging.Level;
 
@@ -37,11 +44,15 @@ public class CarbonWeb extends JavaPlugin {
 
 	private Plugin ess;
 	private HikariDataSource hds;
+	private JDA jda;
 	private File voteDataFile = new File(getDataFolder(), "vote-data.yml");
+	private File discordDataFile = new File(getDataFolder(), "discord-data.yml");
 	private FileConfiguration voteData = YamlConfiguration.loadConfiguration(voteDataFile);
-	//private BukkitTask voteRewardsTask;
+	private FileConfiguration discordData = YamlConfiguration.loadConfiguration(discordDataFile);
+	private BukkitTask discordRankSyncTask;
 	public Permission perm;
 	public Economy econ;
+	public static HashMap<OfflinePlayer, String> linkKeys = new HashMap<>();
 
 	public String getDebugPath() { return "enable-debug-logging"; }
 	public void disablePlugin() {}
@@ -68,18 +79,10 @@ public class CarbonWeb extends JavaPlugin {
 
 		reload();
 
-		// Repeating tasks
-
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-			public void run() { dumpInfo(); }
-		}, 0L, 100L);
-
-		//voteRewardsTask = new QueuedCmdsTask(this).runTaskTimer(this, 15, 15);
-
 		try {
-			JDA jda = new JDABuilder(AccountType.BOT)
+			jda = new JDABuilder(AccountType.BOT)
 					.setToken(getConfig().getString("discord.bot-token"))
-					.addListener(new DiscordBotListener())
+					.addListener(new DiscordBotListener(this))
 					.buildBlocking();
 		} catch (LoginException e) {
 			System.err.println("Exception while logging in!");
@@ -92,10 +95,19 @@ public class CarbonWeb extends JavaPlugin {
 			e.printStackTrace();
 		}
 
+		// Repeating tasks
+
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+			public void run() { dumpInfo(); }
+		}, 0L, 100L);
+
+		discordRankSyncTask = new DiscordRankSyncTask(this).runTaskTimer(this, 30, 30);
+
 	}
 
 	public void reload() {
-		//if (voteRewardsTask != null) voteRewardsTask.cancel();
+		if (discordRankSyncTask != null && Bukkit.getScheduler().isCurrentlyRunning(discordRankSyncTask.getTaskId()))
+			discordRankSyncTask.cancel();
 
 		reloadConfig();
 		String jdbcUrl = "jdbc:mysql://"
@@ -117,7 +129,7 @@ public class CarbonWeb extends JavaPlugin {
 		hc.validate();
 		hds = new HikariDataSource(hc);
 
-		//voteRewardsTask = new QueuedCmdsTask(this).runTaskTimer(this, 15, 15);
+		discordRankSyncTask = new DiscordRankSyncTask(this).runTaskTimer(this, 30, 30);
 	}
 
 	public Connection getConn() {
@@ -268,6 +280,30 @@ public class CarbonWeb extends JavaPlugin {
 	public int getVotes(Player p) {
 		String path = "vote-counts." + p.getUniqueId().toString();
 		return voteData.getInt(path, 0);
+	}
+
+	public JDA jda() { return jda; }
+
+	public void linkDiscordUser(OfflinePlayer player, User user) {
+		discordData.set("minecraft-to-discord-links." + player.getUniqueId().toString(), user.getId());
+	}
+
+	public boolean isLinked(OfflinePlayer player) {
+		return discordData.contains("minecraft-to-discord-links." + player.getUniqueId().toString());
+	}
+
+	public boolean isLinked(User user) {
+		ConfigurationSection linkData = discordData.getConfigurationSection("minecraft-to-discord-links");
+		for (String key : linkData.getKeys(false)) {
+			if (user.getId().equalsIgnoreCase(linkData.getString(key))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void replyTo(MessageChannel channel, User user, String msg) {
+		channel.sendMessage("@" + user.getDiscriminator() + " " + msg).queue();
 	}
 
 	private boolean setupVault() {

@@ -67,6 +67,13 @@
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>3.0.BETA2_147</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.michaelwflaherty</groupId>
+            <artifactId>cleverbotapi</artifactId>
+            <version>1.0.2</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>Votifier</groupId>
