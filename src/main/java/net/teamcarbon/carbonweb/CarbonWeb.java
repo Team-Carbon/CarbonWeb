@@ -4,6 +4,10 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import net.dv8tion.jda.core.AccountType;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.md_5.bungee.api.ChatColor;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
@@ -18,6 +22,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -70,6 +75,22 @@ public class CarbonWeb extends JavaPlugin {
 		}, 0L, 100L);
 
 		//voteRewardsTask = new QueuedCmdsTask(this).runTaskTimer(this, 15, 15);
+
+		try {
+			JDA jda = new JDABuilder(AccountType.BOT)
+					.setToken(getConfig().getString("discord.bot-token"))
+					.addListener(new DiscordBotListener())
+					.buildBlocking();
+		} catch (LoginException e) {
+			System.err.println("Exception while logging in!");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			System.err.println("Exception: Interrupted!");
+			e.printStackTrace();
+		} catch (RateLimitedException e) {
+			System.err.println("Exception: Excessive login attempts! (Rate limit exceeded)");
+			e.printStackTrace();
+		}
 
 	}
 

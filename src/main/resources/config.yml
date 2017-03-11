@@ -47,3 +47,7 @@ auth-levels:
   neon: 131
   vip: 132
   initiate: 254
+discord:
+  bot-token: ""
+  rank-syncing: false
+  ranks:
