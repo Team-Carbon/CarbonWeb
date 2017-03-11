@@ -68,13 +68,15 @@ public class DiscordBotListener extends ListenerAdapter {
 				break;
 			default:
 				if (plugin.getConfig().getBoolean("discord.use-cleverbot", true)) {
-					CleverBotQuery bot = new CleverBotQuery(plugin.getConfig().getString("discord.cleverbot-api-key"), m);
-					try {
-						bot.sendRequest();
-						String response = bot.getResponse();
-						ch.sendMessage(response).queue();
-					} catch (Exception ex) {
-						ch.sendMessage("Sorry! Lost track of the conversation.").queue();
+					if (e.getChannelType() == ChannelType.PRIVATE) {
+						CleverBotQuery bot = new CleverBotQuery(plugin.getConfig().getString("discord.cleverbot-api-key"), m);
+						try {
+							bot.sendRequest();
+							String response = bot.getResponse();
+							ch.sendMessage(response).queue();
+						} catch (Exception ex) {
+							ch.sendMessage("Sorry! Lost track of the conversation.").queue();
+						}
 					}
 				}
 				break;
