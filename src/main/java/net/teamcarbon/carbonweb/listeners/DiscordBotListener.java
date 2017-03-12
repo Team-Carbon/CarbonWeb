@@ -121,6 +121,7 @@ public class DiscordBotListener extends ListenerAdapter {
 		if (s.contains("{VOTE_COUNT}")) {
 			OfflinePlayer player = plugin.getLinkedPlayer(user);
 			if (player != null) {
+				int voteCount = plugin.getVotes(player);
 				s = s.replace("{VOTE_COUNT}", "" + 0);
 			}
 		}

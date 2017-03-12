@@ -278,7 +278,7 @@ public class CarbonWeb extends JavaPlugin {
 		}
 	}
 
-	public int getVotes(Player p) {
+	public int getVotes(OfflinePlayer p) {
 		String path = "vote-counts." + p.getUniqueId().toString();
 		return voteData.getInt(path, 0);
 	}
