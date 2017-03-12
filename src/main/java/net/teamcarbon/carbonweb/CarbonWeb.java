@@ -38,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class CarbonWeb extends JavaPlugin {
@@ -300,6 +301,20 @@ public class CarbonWeb extends JavaPlugin {
 			}
 		}
 		return false;
+	}
+
+	public OfflinePlayer getLinkedPlayer(User user) {
+		ConfigurationSection linkData = discordData.getConfigurationSection("minecraft-to-discord-links");
+		for (String key : linkData.getKeys(false)) {
+			if (user.getId().equalsIgnoreCase(linkData.getString(key))) {
+				return Bukkit.getOfflinePlayer(UUID.fromString(key));
+			}
+		}
+		return null;
+	}
+
+	public User getLinkedUser(OfflinePlayer player) {
+		return jda.getUserById(discordData.getString("minecraft-to-discord-links." + player.getUniqueId().toString(), ""));
 	}
 
 	public void replyTo(MessageChannel channel, User user, String msg) {
