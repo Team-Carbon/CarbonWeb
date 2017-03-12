@@ -99,6 +99,7 @@ public class DiscordBotListener extends ListenerAdapter {
 						if (plugin.isLinked(author) && response.contains("{VOTE_COUNT}")) {
 							plugin.replyTo(ch, author, ":exclamation: You are not linked to your Minecraft account! PM me **!link** to link accounts.");
 						}
+						plugin.replyTo(ch, author, parseVars(response, author));
 					}
 				} else if (plugin.getConfig().getBoolean("discord.use-cleverbot", true)) {
 					if (e.getChannelType() == ChannelType.PRIVATE) {
