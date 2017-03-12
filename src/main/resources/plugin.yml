@@ -35,7 +35,7 @@ commands:
   carbonwebcleverbot:
     description: Talk with CleverBot
     usage: /cbot <phrase>
-    aliases: [cwcleverbot, webcleverbot, cwcb, cleverbot, cb]
+    aliases: [cwcleverbot, webcleverbot, cwcb, cleverbot, cb, cbot]
 permission:
   carbonweb.reload:
     description: Allows reloading CarbonWeb's config

@@ -48,18 +48,15 @@ auth-levels:
   vip: 132
   initiate: 254
 discord:
+  debug-mode: false
   bot-token: ""
   cleverbot-api-key: ""
   use-cleverbot: true
   rank-syncing: false
   console-id: ""
-  emojis:
-    coin-flip-front: "fcoin"
-    coin-flip-back: "bcoin"
-    ping-emoji: "ping_pong"
   commands:
     ip: "Minecraft IP: **team-carbon.net**"
-    site: "Team-Carbon Website: **http://team-carbon.net/**"
+    site: ":link: Team-Carbon Website: **http://team-carbon.net/**"
     votes: "You've voted for the server {VOTE_COUNT} times!"
   ranks:
     server-rank: "discord-rank"

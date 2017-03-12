@@ -36,6 +36,13 @@ public class CarbonWebLink implements CommandExecutor {
 				sender.sendMessage(ChatColor.RED + "This is not a valid key! Make sure it's typed correctly!");
 			} else {
 
+				if (CarbonWeb.linkKeyExists(key)) {
+					plugin.linkDiscordUser(p, CarbonWeb.getLinkUserFromKey(key));
+					CarbonWeb.removeLinkKey(key);
+					sender.sendMessage(ChatColor.AQUA + "Your Discord account has been linked to your Minecraft account!");
+					return true;
+				}
+
 				try {
 
 					ResultSet res = plugin.execq(plugin.f("SELECT COUNT(*) FROM users WHERE unique_key='%s'", key));

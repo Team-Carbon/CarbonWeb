@@ -2,12 +2,16 @@ package net.teamcarbon.carbonweb.listeners;
 
 import com.michaelwflaherty.cleverbotapi.CleverBotQuery;
 import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.entities.*;
+import net.dv8tion.jda.core.entities.ChannelType;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.teamcarbon.carbonweb.CarbonWeb;
 import org.bukkit.OfflinePlayer;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class DiscordBotListener extends ListenerAdapter {
@@ -33,73 +37,92 @@ public class DiscordBotListener extends ListenerAdapter {
 		if (isBot) return;
 
 		boolean rb = r.nextBoolean();
-		switch (m.toLowerCase()) {
-			case "!link":
+		String[] mParts = m.split("\\s+");
+		boolean isCmd = mParts[0].startsWith("!");
+		String cmd = isCmd ? mParts[0].replace("!", "") : "";
+		String[] args = new String[]{};
+		try { args = Arrays.copyOfRange(mParts, 1, mParts.length); } catch (Exception ignored) {}
+
+		if (plugin.getConfig().getBoolean("discord.debug-mode", false)) {
+			ch.sendMessage("[DEBUG] " + m).queue();
+			ch.sendMessage("[DEBUG] args.length = " + args.length + ", isCmd = " + isCmd + ", cmd = " + cmd).queue();
+		}
+
+		switch (cmd) {
+			case "link":
 				if (e.getChannelType() != ChannelType.PRIVATE) {
-					plugin.replyTo(ch, author, "Please use !link in a private message with me! (Right click my name and click 'Message')");
+					plugin.replyTo(ch, author, "Please use `!link` in a private message with me! (Right click my name and click 'Message')", false);
 					return;
 				}
-				if (plugin.isLinked(e.getAuthor())) {
-					ch.sendMessage("Your account is already linked!");
+				OfflinePlayer player = plugin.getLinkedPlayer(author);
+				if (player != null) {
+					plugin.replyTo(ch, author, "Your account is already linked!", false);
+					plugin.replyTo(ch, author, "You're linked to **" + player.getName() + "** (UUID `" + player.getUniqueId() + "`)", false);
 					return;
 				}
-				ch.sendMessage("This function is not yet implemented.");
+				String key = plugin.randKey();
+				while (CarbonWeb.linkKeyExists(key)) { key = plugin.randKey(); } // Make sure there isn't a duplicate key
+				plugin.replyTo(ch, author, "To finish linking your accounts, use this command in game: `/link " + key + "`", false);
 				break;
-			case "!ping":
-				String pingEmoji = plugin.getConfig().getString("discord.emojis.ping-emoji", "ping_pong");
-				if (!pingEmoji.isEmpty()) pingEmoji = ":" + pingEmoji + ":";
-				plugin.replyTo(ch, author, "Pong! " + pingEmoji);
+			case "ping":
+				plugin.replyTo(ch, author, "**Pong!** :ping_pong:", false);
 				break;
-			case "!flip":
-				String coinEmoji = plugin.getConfig().getString("discord.emojis.coin-flip-" + (rb ? "front":"back"), "");
-				if (!coinEmoji.isEmpty()) coinEmoji = ":" + coinEmoji + ":";
-				plugin.replyTo(ch, author, "flipped a coin and got " + (r.nextBoolean() ? "heads" : "tails") + " " + coinEmoji);
+			case "flip":
+				plugin.replyTo(ch, author, "flipped a coin and got " + (r.nextBoolean() ? "`heads` :+1:" : "`tails` :-1:"), false);
 				break;
-			case "!roll":
-				String[] mParts = m.split(" ");
+			case "roll":
 				long sides = 6;
 				try {
-					sides = Math.abs(Long.parseLong(mParts[1]));
-					if (sides < 2) {
-						plugin.replyTo(ch, author, "I can't roll something with only one side!");
-						return;
+					if (args.length > 0) {
+						sides = Math.abs(Long.parseUnsignedLong(args[0]));
+						if (sides < 2) {
+							plugin.replyTo(ch, author, "I can't roll something with only one side!", false);
+							return;
+						}
 					}
-				} catch (Exception ignored) {}
+				} catch (Exception ex) {
+					plugin.replyTo(ch, author, "Sorry, not a valid number!", false);
+					return;
+				}
 
 				if (sides == 2) {
-					String roll2Emoji = plugin.getConfig().getString("discord.emojis.coin-flip-" + (rb ? "front":"back"), "");
-					if (!roll2Emoji.isEmpty()) roll2Emoji = ":" + roll2Emoji + ":";
-					plugin.replyTo(ch, author, "flipped a coin and got " + (r.nextBoolean() ? "heads" : "tails") + " " + roll2Emoji);
+					plugin.replyTo(ch, author, "Flipped a coin and got " + (r.nextBoolean() ? "`heads` :+1:" : "`tails` :-1:"), false);
 				} else {
 					long roll = (int) (Math.random() * sides) + 1;
 					String emoji = "";
 					if (roll >= 0 && roll <= 10) {
 						switch ((int)roll) {
-							case 0: emoji = ":zero:"; break;
-							case 1: emoji = ":one:"; break;
-							case 2: emoji = ":two:"; break;
-							case 3: emoji = ":three:"; break;
-							case 4: emoji = ":four:"; break;
-							case 5: emoji = ":five:"; break;
-							case 6: emoji = ":six:"; break;
-							case 7: emoji = ":seven:"; break;
-							case 8: emoji = ":eight:"; break;
-							case 9: emoji = ":nine:"; break;
-							case 10: emoji = ":ten:"; break;
+							case 0: emoji = ":zero:"; break; case 1: emoji = ":one:"; break; case 2: emoji = ":two:"; break;
+							case 3: emoji = ":three:"; break; case 4: emoji = ":four:"; break; case 5: emoji = ":five:"; break;
+							case 6: emoji = ":six:"; break; case 7: emoji = ":seven:"; break; case 8: emoji = ":eight:"; break;
+							case 9: emoji = ":nine:"; break; case 10: emoji = ":keycap_ten:"; break;case 100: emoji = ":100:"; break;
 						}
 					}
-					plugin.replyTo(ch, author, "rolled a " + sides + "-sided die and landed a " + roll + " " + emoji);
+					plugin.replyTo(ch, author, "rolled a " + sides + "-sided die and landed " + (emoji.isEmpty() ? "`" + roll + "`" : emoji), false);
+				}
+				break;
+			case "cleverbot":
+			case "cbot":
+			case "cb":
+				try {
+					String query = String.join(" ", args);
+					CleverBotQuery bot = new CleverBotQuery(plugin.getConfig().getString("discord.cleverbot-api-key"), query);
+					bot.sendRequest();
+					String response = bot.getResponse();
+					ch.sendMessage(response).queue();
+				} catch (Exception ex) {
+					ch.sendMessage("Sorry! Lost track of the conversation.").queue();
 				}
 				break;
 			default:
-				if (m.startsWith("!")) {
-					String cmd = m.split(" ")[0].replace("!", "");
+				if (isCmd) {
 					if (plugin.getConfig().contains("discord.commands." + cmd)) {
 						String response = plugin.getConfig().getString("discord.commands." + cmd);
-						if (plugin.isLinked(author) && response.contains("{VOTE_COUNT}")) {
-							plugin.replyTo(ch, author, ":exclamation: You are not linked to your Minecraft account! PM me **!link** to link accounts.");
+						if (!plugin.isLinked(author) && response.contains("{VOTE_COUNT}")) {
+							plugin.replyTo(ch, author, ":warning: You must be linked to a Minecraft account to use that! PM me `!link` to link accounts.", false);
+							return;
 						}
-						plugin.replyTo(ch, author, parseVars(response, author));
+						plugin.replyTo(ch, author, parseVars(response, author), false);
 					}
 				} else if (plugin.getConfig().getBoolean("discord.use-cleverbot", true)) {
 					if (e.getChannelType() == ChannelType.PRIVATE) {

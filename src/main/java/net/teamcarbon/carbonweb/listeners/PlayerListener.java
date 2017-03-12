@@ -52,15 +52,19 @@ public class PlayerListener implements Listener {
 	public void messageSent(AsyncPlayerChatEvent e) {
 		if (e.getMessage().toLowerCase().contains("@cleverbot")) {
 			if (plugin.perm.has(e.getPlayer(), "carbonweb.cleverbot.broadcast")) {
-				try {
-					String query = e.getMessage().toLowerCase().replace("@cleverbot", "");
-					CleverBotQuery bot = new CleverBotQuery(plugin.getConfig().getString("discord.cleverbot-api-key"), query);
-					bot.sendRequest();
-					String response = bot.getResponse();
-					Bukkit.broadcastMessage(ChatColor.AQUA + "CleverBot > " + ChatColor.GREEN + response);
-				} catch(Exception ex) {
-					Bukkit.broadcastMessage(ChatColor.AQUA + "CleverBot > " + ChatColor.RED + "Sorry! Lost track of the conversation.");
-				}
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					public void run() {
+						try {
+							String query = e.getMessage().toLowerCase().replace("@cleverbot", "");
+							CleverBotQuery bot = new CleverBotQuery(plugin.getConfig().getString("discord.cleverbot-api-key"), query);
+							bot.sendRequest();
+							String response = bot.getResponse();
+							Bukkit.broadcastMessage(ChatColor.AQUA + "CleverBot > " + ChatColor.GREEN + response);
+						} catch(Exception ex) {
+							Bukkit.broadcastMessage(ChatColor.AQUA + "CleverBot > " + ChatColor.RED + "Sorry! Lost track of the conversation.");
+						}
+					}
+				}, 1L);
 			}
 		}
 	}

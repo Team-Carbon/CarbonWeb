@@ -7,6 +7,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
@@ -38,6 +40,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -45,7 +48,7 @@ public class CarbonWeb extends JavaPlugin {
 
 	private Plugin ess;
 	private HikariDataSource hds;
-	private JDA jda;
+	private static JDA jda;
 	private File voteDataFile = new File(getDataFolder(), "vote-data.yml");
 	private File discordDataFile = new File(getDataFolder(), "discord-data.yml");
 	private FileConfiguration voteData = YamlConfiguration.loadConfiguration(voteDataFile);
@@ -53,7 +56,8 @@ public class CarbonWeb extends JavaPlugin {
 	private BukkitTask discordRankSyncTask;
 	public Permission perm;
 	public Economy econ;
-	public static HashMap<OfflinePlayer, String> linkKeys = new HashMap<>();
+	public static HashMap<String, String> linkKeys = new HashMap<>();
+	public static HashMap<String, String> revLinkKeys = new HashMap<>();
 
 	public String getDebugPath() { return "enable-debug-logging"; }
 	public void disablePlugin() {}
@@ -81,16 +85,22 @@ public class CarbonWeb extends JavaPlugin {
 
 		reload();
 
+		if (jda != null) {
+			for (Object o : jda.getRegisteredListeners()) {
+				jda.removeEventListener(o);
+			}
+		}
+
 		try {
 			jda = new JDABuilder(AccountType.BOT)
 					.setToken(getConfig().getString("discord.bot-token"))
 					.addListener(new DiscordBotListener(this))
-					.buildBlocking();
+					.setAutoReconnect(true)
+					.setAudioEnabled(false)
+					.setBulkDeleteSplittingEnabled(false)
+					.buildAsync();
 		} catch (LoginException e) {
 			System.err.println("Exception while logging in!");
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			System.err.println("Exception: Interrupted!");
 			e.printStackTrace();
 		} catch (RateLimitedException e) {
 			System.err.println("Exception: Excessive login attempts! (Rate limit exceeded)");
@@ -106,6 +116,8 @@ public class CarbonWeb extends JavaPlugin {
 		discordRankSyncTask = new DiscordRankSyncTask(this).runTaskTimer(this, 30, 30);
 
 	}
+
+	public void onDisable() { if (!hds.isClosed()) { hds.close(); } }
 
 	public void reload() {
 		if (discordRankSyncTask != null && Bukkit.getScheduler().isCurrentlyRunning(discordRankSyncTask.getTaskId()))
@@ -171,8 +183,6 @@ public class CarbonWeb extends JavaPlugin {
 			return 0;
 		}
 	}
-
-	public void onDisable() { if (!hds.isClosed()) { hds.close(); } }
 
 	public void dumpInfo() {
 		JsonObject json = new JsonObject();
@@ -284,18 +294,19 @@ public class CarbonWeb extends JavaPlugin {
 		return voteData.getInt(path, 0);
 	}
 
-	public JDA jda() { return jda; }
-
 	public void linkDiscordUser(OfflinePlayer player, User user) {
 		discordData.set("minecraft-to-discord-links." + player.getUniqueId().toString(), user.getId());
+		try { discordData.save(discordDataFile); } catch (Exception ignored) {}
 	}
 
 	public boolean isLinked(OfflinePlayer player) {
-		return discordData.contains("minecraft-to-discord-links." + player.getUniqueId().toString());
+		return discordData != null && discordData.contains("minecraft-to-discord-links." + player.getUniqueId().toString());
 	}
 
 	public boolean isLinked(User user) {
+		if (discordData == null) return false;
 		ConfigurationSection linkData = discordData.getConfigurationSection("minecraft-to-discord-links");
+		if (linkData == null) return false;
 		for (String key : linkData.getKeys(false)) {
 			if (user.getId().equalsIgnoreCase(linkData.getString(key))) {
 				return true;
@@ -305,7 +316,9 @@ public class CarbonWeb extends JavaPlugin {
 	}
 
 	public OfflinePlayer getLinkedPlayer(User user) {
+		if (discordData == null) return null;
 		ConfigurationSection linkData = discordData.getConfigurationSection("minecraft-to-discord-links");
+		if (linkData == null) return null;
 		for (String key : linkData.getKeys(false)) {
 			if (user.getId().equalsIgnoreCase(linkData.getString(key))) {
 				return Bukkit.getOfflinePlayer(UUID.fromString(key));
@@ -318,8 +331,43 @@ public class CarbonWeb extends JavaPlugin {
 		return jda.getUserById(discordData.getString("minecraft-to-discord-links." + player.getUniqueId().toString(), ""));
 	}
 
-	public void replyTo(MessageChannel channel, User user, String msg) {
-		channel.sendMessage("@" + user.getDiscriminator() + " " + msg).queue();
+	public void replyTo(MessageChannel channel, User user, String msg, boolean mentionPrivate) {
+		MessageBuilder mb = new MessageBuilder();
+		if (mentionPrivate || channel.getType() != ChannelType.PRIVATE) mb.append(user);
+		mb.append(" " + msg);
+		channel.sendMessage(mb.build()).queue();
+	}
+
+	public String randKey() {
+		int len = 5;
+		String base = "ABCDEFGHKLMNOPQRSTWXYZ234679";
+		String code = "";
+		Random r = new Random(System.nanoTime() * 1000L);
+		while (code.length() < len) code += base.charAt(r.nextInt(base.length()));
+		return code;
+	}
+
+	public static boolean linkKeyExists(String key) { return revLinkKeys.containsKey(key.toUpperCase(Locale.ENGLISH)); }
+
+	public static void addLinkKey(User user, String key) {
+		key = key.toUpperCase(Locale.ENGLISH);
+		if (linkKeys.containsKey(user.getId())) { revLinkKeys.remove(linkKeys.get(user.getId())); }
+		linkKeys.put(user.getId(), key);
+		revLinkKeys.put(key, user.getId());
+	}
+
+	public static User getLinkUserFromKey(String key) {
+		key = key.toUpperCase(Locale.ENGLISH);
+		if (linkKeyExists(key)) { return jda.getUserById(revLinkKeys.get(key)); }
+		return null;
+	}
+
+	public static void removeLinkKey(String key) {
+		key = key.toUpperCase(Locale.ENGLISH);
+		if (linkKeyExists(key)) {
+			linkKeys.remove(revLinkKeys.get(key));
+			revLinkKeys.remove(key);
+		}
 	}
 
 	private boolean setupVault() {
