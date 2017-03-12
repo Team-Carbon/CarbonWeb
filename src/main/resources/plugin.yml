@@ -32,6 +32,10 @@ commands:
     description: Manage vote rewards
     usage: /reward [addtier|additem|remtier|remitem|edittier|edititem|givereward]
     aliases: [cwreward, webreward, cwrw, reward]
+  carbonwebcleverbot:
+    description: Talk with CleverBot
+    usage: /cbot <phrase>
+    aliases: [cwcleverbot, webcleverbot, cwcb, cleverbot, cb]
 permission:
   carbonweb.reload:
     description: Allows reloading CarbonWeb's config
@@ -42,3 +46,9 @@ permission:
   carbonweb.vote:
     description: Use the vote command to list sites and see vote count
     default: true
+  carbonweb.cleverbot:
+    description: Allows using a command to have a private conversation with CleverBot
+    default: op
+  carbonweb.cleverbot.broadcast:
+    description: Allows using @CleverBot in a message to have a public conversation with CleverBot
+    default: op

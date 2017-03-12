@@ -74,6 +74,7 @@ public class CarbonWeb extends JavaPlugin {
 		Bukkit.getPluginCommand("CarbonWebReward").setExecutor(new CarbonWebReward(this));
 		Bukkit.getPluginCommand("CarbonWebVote").setExecutor(new CarbonWebVote(this));
 		Bukkit.getPluginCommand("CarbonWebTest").setExecutor(new CarbonWebTest(this));
+		Bukkit.getPluginCommand("CarbonWebCleverBot").setExecutor(new CarbonWebCleverBot(this));
 
 		// Find Essentials
 		if (pm.isPluginEnabled("Essentials")) { ess = pm.getPlugin("Essentials"); }
