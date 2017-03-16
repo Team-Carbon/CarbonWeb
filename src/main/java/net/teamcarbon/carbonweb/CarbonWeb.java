@@ -349,11 +349,18 @@ public class CarbonWeb extends JavaPlugin {
 
 	public static boolean linkKeyExists(String key) { return revLinkKeys.containsKey(key.toUpperCase(Locale.ENGLISH)); }
 
+	public static boolean linkUserExists(User user) { return linkKeys.containsKey(user.getId()); }
+
 	public static void addLinkKey(User user, String key) {
 		key = key.toUpperCase(Locale.ENGLISH);
 		if (linkKeys.containsKey(user.getId())) { revLinkKeys.remove(linkKeys.get(user.getId())); }
 		linkKeys.put(user.getId(), key);
 		revLinkKeys.put(key, user.getId());
+	}
+
+	public static String getLinkKeyFromUser(User user) {
+		if (linkUserExists(user)) { return linkKeys.get(user.getId()); }
+		return null;
 	}
 
 	public static User getLinkUserFromKey(String key) {
@@ -368,6 +375,10 @@ public class CarbonWeb extends JavaPlugin {
 			linkKeys.remove(revLinkKeys.get(key));
 			revLinkKeys.remove(key);
 		}
+	}
+
+	public static String stripAltColors(String s) {
+		return ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', s));
 	}
 
 	private boolean setupVault() {

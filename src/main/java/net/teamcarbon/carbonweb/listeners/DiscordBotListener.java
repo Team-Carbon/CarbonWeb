@@ -13,6 +13,7 @@ import org.bukkit.OfflinePlayer;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Set;
 
 public class DiscordBotListener extends ListenerAdapter {
 
@@ -56,12 +57,12 @@ public class DiscordBotListener extends ListenerAdapter {
 				}
 				OfflinePlayer player = plugin.getLinkedPlayer(author);
 				if (player != null) {
-					plugin.replyTo(ch, author, "Your account is already linked!", false);
-					plugin.replyTo(ch, author, "You're linked to **" + player.getName() + "** (UUID `" + player.getUniqueId() + "`)", false);
+					plugin.replyTo(ch, author, "Your account is linked to **" + player.getName() + "** (UUID `" + player.getUniqueId() + "`)"
+							+ "\nhttps://namemc.com/profile/" + player.getUniqueId(), false);
 					return;
 				}
-				String key = plugin.randKey();
-				while (CarbonWeb.linkKeyExists(key)) { key = plugin.randKey(); } // Make sure there isn't a duplicate key
+				String key = CarbonWeb.linkUserExists(author) ? CarbonWeb.getLinkKeyFromUser(author) : plugin.randKey();
+				CarbonWeb.addLinkKey(author, key);
 				plugin.replyTo(ch, author, "To finish linking your accounts, use this command in game: `/link " + key + "`", false);
 				break;
 			case "ping":
@@ -114,6 +115,23 @@ public class DiscordBotListener extends ListenerAdapter {
 					ch.sendMessage("Sorry! Lost track of the conversation.").queue();
 				}
 				break;
+			case "vote":
+			case "votes":
+				plugin.replyTo(ch, author, CarbonWeb.stripAltColors(plugin.getConfig().getString("vote-data.vote-description", "")), false);
+				Set<String> sites = plugin.getConfig().getConfigurationSection("vote-data.vote-sites").getKeys(false);
+				if (sites != null && !sites.isEmpty()) {
+					for (String site : sites) {
+						String val = plugin.getConfig().getString("vote-data.vote-sites." + site, "");
+						plugin.replyTo(ch, author, site + ": " + val, false);
+					}
+				}
+				OfflinePlayer op = plugin.getLinkedPlayer(author);
+				if (op != null) {
+					plugin.replyTo(ch, author, "You have voted " + plugin.getVotes(op) + " times!", false);
+				} else {
+					plugin.replyTo(ch, author, "To view your vote count, link your account! PM me `!link` to get started.", false);
+				}
+				break;
 			default:
 				if (isCmd) {
 					if (plugin.getConfig().contains("discord.commands." + cmd)) {
@@ -145,7 +163,7 @@ public class DiscordBotListener extends ListenerAdapter {
 			OfflinePlayer player = plugin.getLinkedPlayer(user);
 			if (player != null) {
 				int voteCount = plugin.getVotes(player);
-				s = s.replace("{VOTE_COUNT}", "" + 0);
+				s = s.replace("{VOTE_COUNT}", "" + voteCount);
 			}
 		}
 		return s;
