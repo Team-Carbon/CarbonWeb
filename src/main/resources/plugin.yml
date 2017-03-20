@@ -3,7 +3,7 @@ author: OffLuffy
 description: Web utilties for Team-Carbon
 version: ${version}
 main: net.teamcarbon.carbonweb.CarbonWeb
-depends: [Votifier]
+depends: [Vault, Votifier]
 commands:
   carbonwebtest:
     description: A debugging command to test various things

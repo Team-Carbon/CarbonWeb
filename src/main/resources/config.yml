@@ -55,7 +55,7 @@ discord:
   rank-syncing: false
   console-id: ""
   commands:
-    ip: "Minecraft IP: **team-carbon.net**"
+    ip: ":video_game: Minecraft IP: **team-carbon.net**"
     site: ":link: Team-Carbon Website: **http://team-carbon.net/**"
   ranks:
     server-rank: "discord-rank"

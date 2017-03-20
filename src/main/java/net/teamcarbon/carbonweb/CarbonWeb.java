@@ -255,7 +255,7 @@ public class CarbonWeb extends JavaPlugin {
 		for (String key : getConfig().getConfigurationSection("vote-data.vote-promotions").getKeys(false)) {
 			String keyPath = "vote-data.vote-promotions." + key + ".";
 			String keyPerm = "vote-rewards.promotion." + key;
-			if (!perm.has(p, keyPerm)) return;
+			if (!perm.has(p, keyPerm)) continue;
 			int reqVotes = getConfig().getInt(keyPath + "votes", 0);
 			if (vc >= reqVotes) {
 				String rank = getConfig().getString(keyPath + "rank", "default");

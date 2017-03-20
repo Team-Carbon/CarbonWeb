@@ -117,20 +117,21 @@ public class DiscordBotListener extends ListenerAdapter {
 				break;
 			case "vote":
 			case "votes":
-				plugin.replyTo(ch, author, CarbonWeb.stripAltColors(plugin.getConfig().getString("vote-data.vote-description", "")), false);
+				String message = CarbonWeb.stripAltColors(plugin.getConfig().getString("vote-data.vote-description", ""));
 				Set<String> sites = plugin.getConfig().getConfigurationSection("vote-data.vote-sites").getKeys(false);
 				if (sites != null && !sites.isEmpty()) {
 					for (String site : sites) {
 						String val = plugin.getConfig().getString("vote-data.vote-sites." + site, "");
-						plugin.replyTo(ch, author, site + ": " + val, false);
+						message += "\n**" + site + "**: " + val;
 					}
 				}
 				OfflinePlayer op = plugin.getLinkedPlayer(author);
 				if (op != null) {
-					plugin.replyTo(ch, author, "You have voted " + plugin.getVotes(op) + " times!", false);
+					message += "\nYou have voted " + plugin.getVotes(op) + " times!";
 				} else {
-					plugin.replyTo(ch, author, "To view your vote count, link your account! PM me `!link` to get started.", false);
+					message += "\nTo view your vote count, link your account! PM me `!link` to get started.";
 				}
+				plugin.replyTo(ch, author, message, false);
 				break;
 			default:
 				if (isCmd) {

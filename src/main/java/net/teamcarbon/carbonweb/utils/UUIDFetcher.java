@@ -22,7 +22,6 @@ package net.teamcarbon.carbonweb.utils;
  * THE SOFTWARE.
  */
 
-import com.google.common.collect.ImmutableList;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -44,7 +43,7 @@ public class UUIDFetcher implements Callable<Map<String, UUID>> {
 	private final boolean rateLimiting;
 
 	public UUIDFetcher(List<String> names, boolean rateLimiting) {
-		this.names = ImmutableList.copyOf(names);
+		this.names = new ArrayList<>(names);
 		this.rateLimiting = rateLimiting;
 	}
 
@@ -53,7 +52,7 @@ public class UUIDFetcher implements Callable<Map<String, UUID>> {
 	}
 
 	public Map<String, UUID> call() throws Exception {
-		Map<String, UUID> uuidMap = new HashMap<String, UUID>();
+		Map<String, UUID> uuidMap = new HashMap<>();
 		int requests = (int) Math.ceil(names.size() / PROFILES_PER_REQUEST);
 		for (int i = 0; i < requests; i++) {
 			HttpURLConnection connection = createConnection();
