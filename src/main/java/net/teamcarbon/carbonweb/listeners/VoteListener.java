@@ -92,7 +92,7 @@ public class VoteListener implements Listener {
 				Player p = Bukkit.getPlayer(vi.uuid());
 				if (plugin.getConfig().getBoolean("vote-data.reward-same-ips", false)) {
 					for (Player p2 : Bukkit.getOnlinePlayers()) {
-						if (!p.getName().equalsIgnoreCase(p2.getName())) {
+						if (p != null && !p.getName().equalsIgnoreCase(p2.getName())) {
 							String pa1 = p.getAddress().getAddress().getHostAddress();
 							String pa2 = p2.getAddress().getAddress().getHostAddress();
 							if (pa1.equals(pa2)) {

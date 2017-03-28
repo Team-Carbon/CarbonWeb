@@ -11,7 +11,9 @@ vote-data:
   broadcast: "&6{PLAYER} &avoted and received &6{REWARD}&a!"
   allowed-services: []
   vote-description: "&6Vote at these sites to earn rewards!"
-  vote-sites: {}
+  vote-sites:
+    PMC: 'http://www.planetminecraft.com/server/minecraft-team-carbon-2745762/vote/'
+    MCServerStatus: 'https://mcserverstatus.com/vote/29279'
   vote-promotions-world: "world"
   vote-promotions:
     neon-rank:
