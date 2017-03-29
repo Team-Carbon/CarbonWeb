@@ -26,8 +26,12 @@ public class PlayerListener implements Listener {
 
 		String id = e.getPlayer().getUniqueId().toString();
 		List<String> queued = plugin.getConfig().getStringList("vote-data.queued-rewards");
-		if (queued.contains(id)) {
-			VoteListener.rewardPlayer(plugin, e.getPlayer(), true, false);
+		while (queued.contains(id)) {
+			Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+				public void run() {
+					VoteListener.rewardPlayer(plugin, e.getPlayer(), true, false);
+				}
+			}, 40L); // Delay to prevent reward message being lost in login messages
 			queued.remove(id);
 		}
 		plugin.getConfig().set("vote-data.queued-rewards", queued);

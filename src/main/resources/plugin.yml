@@ -4,6 +4,7 @@ description: Web utilties for Team-Carbon
 version: ${version}
 main: net.teamcarbon.carbonweb.CarbonWeb
 depends: [Vault, Votifier]
+softdepend: [Essentials]
 commands:
   carbonwebtest:
     description: A debugging command to test various things

@@ -28,6 +28,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -37,13 +38,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
                 <configuration>
                     <outputDirectory>${project.basedir}/target</outputDirectory>
+                    <outputDirectory>S:\Minecraft Files\Plugin Updates</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2-beta-5</version>
                 <configuration>
                     <finalName>${project.name}-${project.version}</finalName>
                     <descriptors>
@@ -62,32 +66,27 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google</pattern>
-                                    <shadedPattern>net.teamcarbon.carbonweb.google</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>net.dv8tion.jda</pattern>
-                                    <shadedPattern>net.teacarbon.carbonweb.jda</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.commons.lang3</pattern>
-                                    <shadedPattern>net.teacarbon.carbonweb.apache.lang3</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.google</pattern>
+                            <shadedPattern>net.teamcarbon.carbonweb.dependencies.google</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.apache</pattern>
+                            <shadedPattern>net.teamcarbon.carbonweb.dependencies.commons</shadedPattern>
+                        </relocation>
+                    </relocations>
                 </configuration>
             </plugin>
         </plugins>
@@ -109,7 +108,7 @@
         </repository>
         <repository>
             <id>ess-repo</id>
-            <url>http://repo.ess3.net/content/groups/essentials</url>
+            <url>http://repo.ess3.net/content/repositories/essdev/</url>
         </repository>
         <repository>
             <id>jcenter</id>
@@ -134,7 +133,7 @@
         <dependency>
             <groupId>net.ess3</groupId>
             <artifactId>Essentials</artifactId>
-            <version>2.13-SNAPSHOT</version>
+            <version>2.14-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

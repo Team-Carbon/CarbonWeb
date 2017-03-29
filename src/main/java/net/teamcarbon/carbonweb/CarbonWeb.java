@@ -46,7 +46,6 @@ import java.util.logging.Level;
 
 public class CarbonWeb extends JavaPlugin {
 
-	private Plugin ess;
 	private HikariDataSource hds;
 	private static JDA jda;
 	private File voteDataFile = new File(getDataFolder(), "vote-data.yml");
@@ -56,6 +55,7 @@ public class CarbonWeb extends JavaPlugin {
 	private BukkitTask discordRankSyncTask;
 	public Permission perm;
 	public Economy econ;
+	public static Plugin ess;
 	public static HashMap<String, String> linkKeys = new HashMap<>();
 	public static HashMap<String, String> revLinkKeys = new HashMap<>();
 
@@ -81,7 +81,10 @@ public class CarbonWeb extends JavaPlugin {
 		Bukkit.getPluginCommand("CarbonWebCleverBot").setExecutor(new CarbonWebCleverBot(this));
 
 		// Find Essentials
-		if (pm.isPluginEnabled("Essentials")) { ess = pm.getPlugin("Essentials"); }
+		if (pm.isPluginEnabled("Essentials")) {
+			ess = pm.getPlugin("Essentials");
+			getLogger().log(Level.INFO, "Found Essentials");
+		}
 
 		reload();
 
@@ -223,10 +226,10 @@ public class CarbonWeb extends JavaPlugin {
 					com.earth2me.essentials.User eu = ep.getUser(p);
 					jsonEss.addProperty("hidden", eu.isHidden());
 					jsonEss.addProperty("balance", eu.getMoney());
-					jsonEss.addProperty("muted", eu.isMuted());
-					jsonEss.addProperty("jailed", eu.isJailed());
 					jsonEss.addProperty("god", eu.isGodModeEnabled());
-					jsonEss.addProperty("socialspy", eu.isSocialSpyEnabled());
+					jsonEss.addProperty("jail", eu.isJailed());
+					jsonEss.addProperty("mute", eu.isMuted());
+
 					jsonPlr.add("Essentials", jsonEss);
 				}
 
@@ -341,10 +344,10 @@ public class CarbonWeb extends JavaPlugin {
 	public String randKey() {
 		int len = 5;
 		String base = "ABCDEFGHKLMNOPQRSTWXYZ234679";
-		String code = "";
 		Random r = new Random(System.nanoTime() * 1000L);
-		while (code.length() < len) code += base.charAt(r.nextInt(base.length()));
-		return code;
+		StringBuilder code = new StringBuilder();
+		while (code.length() < len) code.append(base.charAt(r.nextInt(base.length())));
+		return code.toString();
 	}
 
 	public static boolean linkKeyExists(String key) { return revLinkKeys.containsKey(key.toUpperCase(Locale.ENGLISH)); }

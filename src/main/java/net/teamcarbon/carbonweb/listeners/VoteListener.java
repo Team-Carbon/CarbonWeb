@@ -88,7 +88,7 @@ public class VoteListener implements Listener {
 	private void processVotes() {
 		String pass = plugin.getConfig().getString("vote-data.password", null);
 		if (!processVotes.isEmpty()) {
-			for (VoteInfo vi : processVotes) {
+			for (VoteInfo vi : new ArrayList<>(processVotes)) {
 				Player p = Bukkit.getPlayer(vi.uuid());
 				if (plugin.getConfig().getBoolean("vote-data.reward-same-ips", false)) {
 					for (Player p2 : Bukkit.getOnlinePlayers()) {
@@ -103,6 +103,7 @@ public class VoteListener implements Listener {
 					}
 				}
 				VoteListener.rewardPlayer(plugin, p, true, false);
+				processVotes.remove(vi);
 				if (p != null && !p.isOnline()) {
 					List<String> queuedRewards = plugin.getConfig().getStringList("vote-data.queued-rewards");
 					if (!queuedRewards.contains(p.getUniqueId().toString())) {
@@ -207,6 +208,7 @@ public class VoteListener implements Listener {
 		for (String tier : plugin.getConfig().getConfigurationSection("vote-data.rewards").getKeys(false)) {
 			if (plugin.perm.has(p, "vote-rewards.tier." + tier)) {
 				RandomCollection<String> items = new RandomCollection<>();
+
 				for (String item : plugin.getConfig().getConfigurationSection(plugin.tierPath(tier) + ".items").getKeys(false)) {
 					items.add(plugin.getConfig().getInt(plugin.itemPath(tier, item) + ".weight", 0), item);
 				}
